@@ -43,6 +43,7 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
+button:focus-visible,
 a:focus-visible {
   outline: 3px solid #9cc7b8;
   outline-offset: 4px;
@@ -546,6 +547,15 @@ a:focus-visible {
   color: #63706e;
   font-size: 13px;
   font-weight: 600;
+}
+
+.header-nav a {
+  padding: 10px 0;
+  transition: color 150ms ease;
+}
+
+.header-nav a[aria-current='page'] {
+  color: var(--accent-dark);
 }
 
 .header-nav a:hover,

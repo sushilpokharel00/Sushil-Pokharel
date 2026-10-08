@@ -42,13 +42,20 @@ function ArrowIcon() {
 }
 
 function Header() {
+  const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+
   return (
     <header className="site-header">
       <div className="header-inner">
         <Brand />
         <nav className="header-nav" aria-label="Main navigation">
-          <a href="/terms">Terms</a>
-          <a href="/beta">Beta access</a>
+          <a href="/terms" aria-current={pathname === '/terms' ? 'page' : undefined}>Terms</a>
+          <a
+            href="/beta"
+            aria-current={pathname === '/beta' || pathname === '/beta-requested' ? 'page' : undefined}
+          >
+            Beta access
+          </a>
         </nav>
       </div>
     </header>
@@ -546,10 +553,11 @@ function MaintenancePage() {
             <span className="status-core" />
           </div>
           <span className="eyebrow"><span /> WEBSITE STATUS</span>
-          <h1 id="maintenance-title">We’ll be back after maintenance.</h1>
+          <h1 id="maintenance-title">We’re making improvements.</h1>
           <p className="maintenance-copy">
-            We’re working on the website. There is no confirmed reopening
-            date. You can still contact Sushil or request beta access below.
+            The website is temporarily under maintenance while we work on
+            updates. There’s no confirmed reopening date yet. In the meantime,
+            contact Sushil or request beta access.
           </p>
           <div className="maintenance-details">
             <span className="maintenance-detail-icon" aria-hidden="true">
@@ -563,8 +571,8 @@ function MaintenancePage() {
           <div className="beta-notice" role="note">
             <span className="beta-notice-icon" aria-hidden="true">i</span>
             <span>
-              Choose the option that matches your goal and complete the short form.
-              Sushil will review your request and follow up when appropriate.
+              For a general inquiry, choose Contact Sushil. To try the upcoming
+              release, choose Request beta access.
             </span>
           </div>
           <div className="request-toggle-row" aria-label="Contact options">
