@@ -40,9 +40,11 @@ npm run preview
 The generated site is written to `dist/`. Build output and installed
 dependencies are intentionally excluded from version control.
 
-Configure the repository’s GitHub Pages source once under **Settings →
-Pages → Build and deployment → Source → GitHub Actions**. Then pushing to
-`main` builds and deploys the site using `.github/workflows/deploy-pages.yml`.
+Pushing to `main` builds and deploys the site using
+`.github/workflows/deploy-pages.yml`. The workflow also publishes the built
+HTML and assets to the repository root for branch-based GitHub Pages hosting.
+`app.html` is the Vite source template; the root `index.html` is generated
+deployment output.
 
 ## Project structure
 
@@ -51,8 +53,9 @@ src/
   App.jsx       Page content and interactions
   main.jsx      React entry point
   styles.css    Responsive styles
+app.html        Vite HTML source template
 vite.config.js  Vite configuration for the GitHub Pages project path
-index.html      HTML entry point and metadata
+index.html      Generated GitHub Pages entry point
 ```
 
 The Terms & Conditions content is general information, not legal advice.

@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -32,7 +32,19 @@ jobs:
       - name: Build website
         run: |
           npm run build
+          cp dist/app.html dist/index.html
           cp dist/index.html dist/404.html
+          git rm -r --ignore-unmatch assets
+          mkdir -p assets
+          cp -R dist/assets/. assets/
+          cp dist/index.html index.html
+          git add index.html assets
+          if ! git diff --cached --quiet; then
+            git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -m "Publish built website"
+            git push
+          fi
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:

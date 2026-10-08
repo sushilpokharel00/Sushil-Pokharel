@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Sushil Pokharel mark">
+  <rect width="64" height="64" rx="18" fill="#EAF1ED"/>
+  <path d="M18 46V18h10.5c7.7 0 12.8 4.6 12.8 11.2 0 6.6-5.1 10.9-12.8 10.9H25.5V46H18Zm7.5-15.3h2.7c3.8 0 6.2-1.8 6.2-4.9s-2.4-4.8-6.3-4.8h-2.6v9.7Z" fill="#426B5E"/>
+  <path d="M40.5 46V18h6.5v28h-6.5Z" fill="#426B5E" opacity="0.75"/>
+</svg>
