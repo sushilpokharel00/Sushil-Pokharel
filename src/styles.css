@@ -124,6 +124,14 @@ a:focus-visible {
   line-height: 1.8;
 }
 
+.maintenance-settings-warning {
+  max-width: 435px;
+  margin: 12px 0 0;
+  color: #8b5e18;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
 .maintenance-details {
   display: flex;
   align-items: center;
@@ -759,6 +767,53 @@ a:focus-visible {
 .auth-field input:focus {
   border-color: #7f9f91;
   outline: 3px solid rgba(127, 159, 145, 0.16);
+}
+
+.auth-field textarea {
+  width: 100%;
+  min-height: 110px;
+  padding: 11px 13px;
+  border: 1px solid #dfe5e1;
+  border-radius: 7px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.auth-field textarea:focus {
+  border-color: #7f9f91;
+  outline: 3px solid rgba(127, 159, 145, 0.16);
+}
+
+.admin-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #36443f;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-checkbox input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--accent-dark);
+}
+
+.admin-inline-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 5px;
+}
+
+.admin-updated {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 11px;
 }
 
 .auth-submit,

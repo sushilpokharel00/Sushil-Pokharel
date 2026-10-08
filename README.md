@@ -11,6 +11,7 @@ request flow, and a Terms & Conditions page.
 - Accessible navigation, forms, and status messages
 - Email drafts prepared for review before sending
 - Supabase email/password accounts, authenticator-app MFA, and password recovery
+- MFA-protected admin dashboard for the public home-page status and message
 
 ## Tech stack
 
@@ -98,10 +99,39 @@ public project values. Do not commit `.env.local`. If the values are not
 configured, the account page explains how to configure them and does not
 attempt to authenticate.
 
+## Admin dashboard
+
+After setting up Supabase, apply
+`supabase/migrations/20261008000000_site_settings.sql` in the Supabase SQL
+Editor. The home page reads the public maintenance status and message from this
+table. `/admin` lets an administrator update the availability switch, heading,
+and message.
+
+There is intentionally no default admin username or password. Create and
+confirm your personal account at `/account`, then enable an authenticator in
+its account security settings. In the Supabase SQL Editor, replace the example
+email below with that confirmed account's email and run the statement to assign
+the trusted `app_metadata` role:
+
+```sql
+update auth.users
+set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb)
+  || '{"role":"admin"}'::jsonb
+where email = 'YOUR_CONFIRMED_ACCOUNT_EMAIL'
+returning id, email;
+```
+
+Sign out and back in after granting the role so Supabase issues a fresh token,
+then visit `/admin`. Row-level security allows only an `admin` role in
+Supabase-managed `app_metadata` with an `aal2` (MFA-verified) session to update
+the content. The site never contains a service-role key. Do not grant the admin
+role through user-editable `user_metadata`.
+
 ## Project structure
 
 ```text
 src/
+  AdminPage.jsx Admin-only home-page status editor
   AuthPage.jsx  Account, sign-in, signup, MFA, and password flows
   App.jsx       Page content and interactions
   lib/
@@ -114,6 +144,8 @@ mcp-server/
   index.test.js     MCP startup test
   pages-checker.js  GitHub Pages route diagnostics
   pages-checker.test.js
+supabase/
+  migrations/   Public status table with admin/MFA-only update policies
 app.html        Vite HTML source template
 vite.config.js  Vite configuration for the GitHub Pages project path
 index.html      Generated GitHub Pages entry point

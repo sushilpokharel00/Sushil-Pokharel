@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import AdminPage from './AdminPage.jsx';
 import AuthPage from './AuthPage.jsx';
 import { sitePath } from './site-path.js';
+import { supabase } from './lib/supabase.js';
 
 const sections = [
   { id: 'agreement', title: 'Agreement to these terms' },
@@ -485,12 +487,46 @@ function MaintenancePage() {
   const [activeForm, setActiveForm] = useState(null);
   const [contactStatus, setContactStatus] = useState('');
   const [betaStatus, setBetaStatus] = useState('');
+  const [siteSettings, setSiteSettings] = useState({
+    is_maintenance: true,
+    maintenance_title: 'We’re making improvements.',
+    maintenance_message: 'The website is temporarily under maintenance while we work on updates. There’s no confirmed reopening date yet. In the meantime, contact Sushil or request beta access.',
+  });
+  const [settingsWarning, setSettingsWarning] = useState('');
 
   useEffect(() => {
     setPageMetadata(
       'Under maintenance | Sushil Pokharel',
       'This website is temporarily under maintenance. Request beta access or contact Sushil Pokharel.',
     );
+  }, []);
+
+  useEffect(() => {
+    if (!supabase) return undefined;
+
+    let isMounted = true;
+    supabase
+      .from('site_settings')
+      .select('is_maintenance, maintenance_title, maintenance_message')
+      .eq('id', 1)
+      .single()
+      .then(({ data, error }) => {
+        if (!isMounted) return;
+        if (error) {
+          setSettingsWarning('The latest website status is temporarily unavailable. Showing the default message.');
+          return;
+        }
+        setSiteSettings(data);
+      })
+      .catch(() => {
+        if (isMounted) {
+          setSettingsWarning('The latest website status is temporarily unavailable. Showing the default message.');
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   function handleContactSubmit(event) {
@@ -581,13 +617,12 @@ function MaintenancePage() {
             <span className="status-orbit" />
             <span className="status-core" />
           </div>
-          <span className="eyebrow"><span /> WEBSITE STATUS</span>
-          <h1 id="maintenance-title">We’re making improvements.</h1>
+          <span className="eyebrow"><span /> {siteSettings.is_maintenance ? 'WEBSITE STATUS' : 'NOW OPEN'}</span>
+          <h1 id="maintenance-title">{siteSettings.maintenance_title}</h1>
           <p className="maintenance-copy">
-            The website is temporarily under maintenance while we work on
-            updates. There’s no confirmed reopening date yet. In the meantime,
-            contact Sushil or request beta access.
+            {siteSettings.maintenance_message}
           </p>
+          {settingsWarning && <p className="maintenance-settings-warning" role="status">{settingsWarning}</p>}
           <div className="maintenance-details">
             <span className="maintenance-detail-icon" aria-hidden="true">
               <svg viewBox="0 0 20 20" fill="none">
@@ -987,6 +1022,15 @@ function NotFoundPage() {
 
 export default function App() {
   const pathname = getPagePathname();
+  if (pathname === '/admin') {
+    return (
+      <>
+        <Header />
+        <AdminPage />
+        <Footer />
+      </>
+    );
+  }
   if (pathname === '/account' || pathname === '/login') {
     return (
       <>
