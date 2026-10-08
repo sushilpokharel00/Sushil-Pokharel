@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "github-pages-diagnostics": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${workspaceFolder}/mcp-server/index.js"]
+    }
+  }
+}
