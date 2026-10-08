@@ -10,12 +10,14 @@ request flow, and a Terms & Conditions page.
 - Beta participation terms with required applicant acknowledgement
 - Accessible navigation, forms, and status messages
 - Email drafts prepared for review before sending
+- Supabase email/password accounts, authenticator-app MFA, and password recovery
 
 ## Tech stack
 
 - React 18
 - Vite 6
 - CSS
+- Supabase Auth
 
 ## Getting started
 
@@ -55,8 +57,8 @@ The repository includes a stdio MCP server with a read-only
 same-site routes, identifies GitHub Pages' generic 404 response, recognizes
 the app shell served as a client-side route fallback, and labels the expected
 client page for known routes and unknown paths. By default, it checks the
-Terms page, beta page, and a probe path that should render the app's not-found
-page. For safety, it only requests HTTPS sites hosted on `github.io`.
+Terms, beta, and account pages, plus a probe path that should render the app's
+not-found page. For safety, it only requests HTTPS sites hosted on `github.io`.
 
 Run the server with `npm run mcp`, or open this repository in VS Code to load
 the server from `.vscode/mcp.json`. Pass a project Pages URL and optional
@@ -71,12 +73,41 @@ relative route paths, for example:
 
 Run its tests with `npm test`.
 
+## Account authentication
+
+The `/account` page supports email/password sign-up and sign-in, email-confirmed
+registration, password reset and change, and TOTP authenticator enrollment,
+verification, and removal. Supabase verifies a TOTP challenge before a user
+with MFA enabled can finish signing in. Authentication is provided by Supabase;
+the website does not store account passwords itself.
+
+Create a Supabase project, enable email/password authentication, and set the
+email-confirmation and password policies in the Supabase dashboard. Add the
+GitHub Actions repository secrets `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_ANON_KEY` with the project URL and public anon/publishable key.
+These public client configuration values are embedded in the generated website
+bundle; never use a Supabase service-role key in the browser or GitHub Pages.
+Allow the following redirect URL in Supabase Auth URL Configuration:
+
+```text
+https://sushilpokharel00.github.io/Sushil-Pokharel/account
+```
+
+For local development, copy `.env.example` to `.env.local` and fill in the same
+public project values. Do not commit `.env.local`. If the values are not
+configured, the account page explains how to configure them and does not
+attempt to authenticate.
+
 ## Project structure
 
 ```text
 src/
+  AuthPage.jsx  Account, sign-in, signup, MFA, and password flows
   App.jsx       Page content and interactions
+  lib/
+    supabase.js Supabase Auth client
   main.jsx      React entry point
+  site-path.js  GitHub Pages-aware route helper
   styles.css    Responsive styles
 mcp-server/
   index.js          MCP stdio server

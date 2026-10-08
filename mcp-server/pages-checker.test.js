@@ -40,6 +40,21 @@ test('checks the unknown-route fallback and expects the app 404 page', async () 
   assert.equal(result.routes[0].result, 'spa-fallback');
 });
 
+test('labels the account route for the sign-in and security UI', async () => {
+  const result = await checkGithubPagesRoutes(
+    { siteUrl, routes: ['account'] },
+    async (url) => {
+      const href = String(url);
+      return href.endsWith('/project/')
+        ? response(href, 200, appShell)
+        : response(href, 404, appShell);
+    },
+  );
+
+  assert.equal(result.routes[0].expectedClientPage, 'account');
+  assert.equal(result.routes[0].result, 'spa-fallback');
+});
+
 test('identifies GitHub Pages generic 404 pages and recommends publishing the fallback', async () => {
   const result = await checkGithubPagesRoutes({ siteUrl, routes: ['terms'] }, async (url) => {
     const href = String(url);

@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import AuthPage from './AuthPage.jsx';
+import { sitePath } from './site-path.js';
 
 const sections = [
   { id: 'agreement', title: 'Agreement to these terms' },
@@ -16,10 +18,6 @@ const sections = [
   { id: 'governing-law', title: 'Governing law' },
   { id: 'contact', title: 'Contact us' },
 ];
-
-function sitePath(path = '/') {
-  return `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`;
-}
 
 function setPageMetadata(title, description) {
   document.title = title;
@@ -72,6 +70,9 @@ function Header() {
             aria-current={pathname === '/beta' || pathname === '/beta-requested' ? 'page' : undefined}
           >
             Beta access
+          </a>
+          <a href={sitePath('/account')} aria-current={pathname === '/account' || pathname === '/login' ? 'page' : undefined}>
+            Sign in
           </a>
           <GitHubLink className="header-github-link" />
         </nav>
@@ -986,6 +987,15 @@ function NotFoundPage() {
 
 export default function App() {
   const pathname = getPagePathname();
+  if (pathname === '/account' || pathname === '/login') {
+    return (
+      <>
+        <Header />
+        <AuthPage isAccountPage={pathname === '/account'} />
+        <Footer />
+      </>
+    );
+  }
   if (pathname === '/beta') return <BetaRequestPage />;
   if (pathname === '/beta-requested') {
     return new URLSearchParams(window.location.search).has('submitted')
