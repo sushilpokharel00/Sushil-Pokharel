@@ -55,6 +55,21 @@ test('labels the account route for the sign-in and security UI', async () => {
   assert.equal(result.routes[0].result, 'spa-fallback');
 });
 
+test('labels the admin route for the protected website settings dashboard', async () => {
+  const result = await checkGithubPagesRoutes(
+    { siteUrl, routes: ['admin'] },
+    async (url) => {
+      const href = String(url);
+      return href.endsWith('/project/')
+        ? response(href, 200, appShell)
+        : response(href, 404, appShell);
+    },
+  );
+
+  assert.equal(result.routes[0].expectedClientPage, 'admin');
+  assert.equal(result.routes[0].result, 'spa-fallback');
+});
+
 test('identifies GitHub Pages generic 404 pages and recommends publishing the fallback', async () => {
   const result = await checkGithubPagesRoutes({ siteUrl, routes: ['terms'] }, async (url) => {
     const href = String(url);

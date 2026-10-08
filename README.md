@@ -53,17 +53,38 @@ output.
 
 ## GitHub Pages MCP diagnostics
 
-The repository includes a stdio MCP server with a read-only
-`check_github_pages_routes` tool. It checks the site root and requested
-same-site routes, identifies GitHub Pages' generic 404 response, recognizes
-the app shell served as a client-side route fallback, and labels the expected
-client page for known routes and unknown paths. By default, it checks the
-Terms, beta, and account pages, plus a probe path that should render the app's
-not-found page. For safety, it only requests HTTPS sites hosted on `github.io`.
+The repository includes a local stdio MCP server. In addition to the read-only
+`check_github_pages_routes` tool, it checks Supabase storage, reads and updates
+the public website-status row, and can grant the admin role to an already
+confirmed account with verified TOTP MFA. Supabase is persistent storage; the
+MCP server is a trusted local management interface, not a hosted database.
 
-Run the server with `npm run mcp`, or open this repository in VS Code to load
-the server from `.vscode/mcp.json`. Pass a project Pages URL and optional
-relative route paths, for example:
+The route checker tests the site root, Terms, beta, account and admin URLs, plus
+a probe path that should render the app's not-found page. For safety, it only
+requests HTTPS sites hosted on `github.io`.
+
+Copy `.env.example` to `.env` and fill in the public Supabase project URL and
+anon/publishable key. Set `SUPABASE_SERVICE_ROLE_KEY` to the local-only
+service-role key from the Supabase project API settings to enable MCP settings
+updates and admin promotion. Keep `.env` private; it is gitignored. Never use
+the service-role key as a `VITE_` variable or GitHub Actions secret. The MCP
+server loads `.env` from the repository root when it starts; restart the MCP
+server after changing it. The service-role key bypasses website RLS, so only
+use this stdio MCP server from a trusted local editor.
+
+Run the server with `npm run mcp`, or start it from `.vscode/mcp.json`.
+The MCP server exposes these tools:
+
+- `check_supabase_storage` — verify local storage configuration and the
+  `site_settings` row/migration.
+- `get_site_settings` — read current public website-status settings.
+- `update_site_settings` — update the status, heading, and message using the
+  local service-role key.
+- `grant_site_admin` — promote a confirmed account only after it has verified
+  TOTP MFA and the caller repeats its email for confirmation.
+- `check_github_pages_routes` — check the deployed website routes.
+
+Example input for `check_github_pages_routes`:
 
 ```json
 {
@@ -94,10 +115,10 @@ Allow the following redirect URL in Supabase Auth URL Configuration:
 https://sushilpokharel00.github.io/Sushil-Pokharel/account
 ```
 
-For local development, copy `.env.example` to `.env.local` and fill in the same
-public project values. Do not commit `.env.local`. If the values are not
-configured, the account page explains how to configure them and does not
-attempt to authenticate.
+For local website development, put the public project values in `.env` as
+shown in `.env.example`. The MCP service-role key is read only by the Node MCP
+process; Vite does not expose it to the browser because it is not prefixed
+with `VITE_`.
 
 ## Admin dashboard
 
@@ -108,21 +129,13 @@ table. `/admin` lets an administrator update the availability switch, heading,
 and message.
 
 There is intentionally no default admin username or password. Create and
-confirm your personal account at `/account`, then enable an authenticator in
-its account security settings. In the Supabase SQL Editor, replace the example
-email below with that confirmed account's email and run the statement to assign
-the trusted `app_metadata` role:
+confirm your own account at `/account`, enable and verify an authenticator,
+then call the MCP `grant_site_admin` tool with that exact email in both input
+fields. The tool verifies the account is email-confirmed and has verified TOTP
+before assigning the trusted `app_metadata` role. Sign out and back in after
+promotion so Supabase issues a fresh token, then visit `/admin`.
 
-```sql
-update auth.users
-set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb)
-  || '{"role":"admin"}'::jsonb
-where email = 'YOUR_CONFIRMED_ACCOUNT_EMAIL'
-returning id, email;
-```
-
-Sign out and back in after granting the role so Supabase issues a fresh token,
-then visit `/admin`. Row-level security allows only an `admin` role in
+Row-level security allows only an `admin` role in
 Supabase-managed `app_metadata` with an `aal2` (MFA-verified) session to update
 the content. The site never contains a service-role key. Do not grant the admin
 role through user-editable `user_metadata`.
@@ -142,6 +155,11 @@ src/
 mcp-server/
   index.js          MCP stdio server
   index.test.js     MCP startup test
+  admin-users.js    Confirmed-MFA admin promotion
+  admin-users.test.js
+  site-settings.js  Supabase status read/update operations
+  site-settings.test.js
+  load-env.js       Loads ignored local .env for MCP only
   pages-checker.js  GitHub Pages route diagnostics
   pages-checker.test.js
 supabase/

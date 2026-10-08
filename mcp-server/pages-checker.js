@@ -62,6 +62,7 @@ function expectedClientPage(route) {
   if (route === 'terms') return 'terms';
   if (route === 'beta') return 'beta-request';
   if (route === 'account' || route === 'login') return 'account';
+  if (route === 'admin') return 'admin';
   if (route === 'beta-requested') return 'beta-confirmation';
   return 'not-found';
 }
@@ -89,7 +90,7 @@ async function getPage(url, fetchImpl) {
 }
 
 export async function checkGithubPagesRoutes(
-  { siteUrl, routes = ['terms', 'beta', 'account', '__mcp_not_found_probe__'] },
+  { siteUrl, routes = ['terms', 'beta', 'account', 'admin', '__mcp_not_found_probe__'] },
   fetchImpl = fetch,
 ) {
   const baseUrl = parseSiteUrl(siteUrl);

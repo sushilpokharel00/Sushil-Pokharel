@@ -15,6 +15,10 @@ test('serves the route checker over MCP stdio', async () => {
     await client.connect(transport);
     const { tools } = await client.listTools();
     assert.ok(tools.some(({ name }) => name === 'check_github_pages_routes'));
+    assert.ok(tools.some(({ name }) => name === 'check_supabase_storage'));
+    assert.ok(tools.some(({ name }) => name === 'get_site_settings'));
+    assert.ok(tools.some(({ name }) => name === 'update_site_settings'));
+    assert.ok(tools.some(({ name }) => name === 'grant_site_admin'));
   } finally {
     await client.close();
   }
