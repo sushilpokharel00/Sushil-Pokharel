@@ -608,11 +608,19 @@ a:focus-visible {
   transition: color 150ms ease;
 }
 
+.header-github-link,
+.footer-github-link {
+  color: #2e4d45;
+  font-weight: 700;
+}
+
 .header-nav a[aria-current='page'] {
   color: var(--accent-dark);
 }
 
 .header-nav a:hover,
+.header-github-link:hover,
+.footer-github-link:hover,
 .secondary-link:hover {
   color: var(--accent);
 }
@@ -1041,13 +1049,23 @@ p {
 
 .footer-inner p,
 .footer-inner > span,
-.footer-email {
+.footer-email,
+.footer-github-link {
   margin: 0;
   color: #929ba4;
   font-size: 10px;
 }
 
-.footer-email:hover {
+.footer-email {
+  margin-left: auto;
+}
+
+.footer-github-link {
+  margin-left: 18px;
+}
+
+.footer-email:hover,
+.footer-github-link:hover {
   color: var(--accent);
 }
 

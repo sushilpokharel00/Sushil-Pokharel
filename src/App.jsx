@@ -37,6 +37,19 @@ function Brand() {
   );
 }
 
+function GitHubLink({ className }) {
+  return (
+    <a
+      className={className}
+      href="https://github.com/sushilpokharel00"
+      target="_blank"
+      rel="noreferrer"
+    >
+      GitHub
+    </a>
+  );
+}
+
 function ArrowIcon() {
   return (
     <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
@@ -60,6 +73,7 @@ function Header() {
           >
             Beta access
           </a>
+          <GitHubLink className="header-github-link" />
         </nav>
       </div>
     </header>
@@ -81,6 +95,7 @@ function Footer() {
       <div className="footer-inner">
         <Brand />
         <a className="footer-email" href={sitePath('/beta')}>Beta access by request</a>
+        <GitHubLink className="footer-github-link" />
         <span>Lokanthali, Bhaktapur, Nepal · © {new Date().getFullYear()} Sushil Pokharel</span>
       </div>
     </footer>
