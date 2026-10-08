@@ -40,8 +40,9 @@ npm run preview
 The generated site is written to `dist/`. Build output and installed
 dependencies are intentionally excluded from version control.
 
-Pushing to `main` builds and deploys the site to GitHub Pages using the
-workflow in `.github/workflows/deploy-pages.yml`.
+Configure the repository’s GitHub Pages source once under **Settings →
+Pages → Build and deployment → Source → GitHub Actions**. Then pushing to
+`main` builds and deploys the site using `.github/workflows/deploy-pages.yml`.
 
 ## Project structure
 
