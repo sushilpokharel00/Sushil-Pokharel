@@ -20,6 +20,24 @@ test('recognizes the app shell served as the client-side route fallback', async 
 
   assert.equal(result.healthy, true);
   assert.equal(result.routes[0].result, 'spa-fallback');
+  assert.equal(result.routes[0].expectedClientPage, 'terms');
+});
+
+test('checks the unknown-route fallback and expects the app 404 page', async () => {
+  const result = await checkGithubPagesRoutes(
+    { siteUrl, routes: ['__mcp_not_found_probe__'] },
+    async (url) => {
+      const href = String(url);
+      return href.endsWith('/project/')
+        ? response(href, 200, appShell)
+        : response(href, 404, appShell);
+    },
+  );
+
+  assert.equal(result.healthy, true);
+  assert.equal(result.routes[0].expectedClientPage, 'not-found');
+  assert.equal(result.routes[0].status, 404);
+  assert.equal(result.routes[0].result, 'spa-fallback');
 });
 
 test('identifies GitHub Pages generic 404 pages and recommends publishing the fallback', async () => {

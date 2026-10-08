@@ -12,10 +12,10 @@ server.registerTool(
   'check_github_pages_routes',
   {
     title: 'Check GitHub Pages routes',
-    description: 'Check a public GitHub Pages site root and its client-side routes for deployment 404 errors.',
+    description: 'Check a public GitHub Pages root, the Terms and beta routes, and an unknown route that should display the app 404 page.',
     inputSchema: {
       siteUrl: z.string().url().describe('The HTTPS GitHub Pages site URL, including its project path if applicable.'),
-      routes: z.array(z.string()).optional().describe('Relative same-site routes to check; defaults to terms and beta.'),
+      routes: z.array(z.string()).optional().describe('Relative same-site routes to check; defaults to terms, beta, and an unknown route.'),
     },
     annotations: {
       readOnlyHint: true,

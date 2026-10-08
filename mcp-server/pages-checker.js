@@ -57,6 +57,14 @@ function isGithubPagesNotFound(status, title, html) {
   );
 }
 
+function expectedClientPage(route) {
+  if (!route) return 'home';
+  if (route === 'terms') return 'terms';
+  if (route === 'beta') return 'beta-request';
+  if (route === 'beta-requested') return 'beta-confirmation';
+  return 'not-found';
+}
+
 async function getPage(url, fetchImpl) {
   const response = await fetchImpl(url, {
     headers: { accept: 'text/html' },
@@ -79,7 +87,10 @@ async function getPage(url, fetchImpl) {
   };
 }
 
-export async function checkGithubPagesRoutes({ siteUrl, routes = ['terms', 'beta'] }, fetchImpl = fetch) {
+export async function checkGithubPagesRoutes(
+  { siteUrl, routes = ['terms', 'beta', '__mcp_not_found_probe__'] },
+  fetchImpl = fetch,
+) {
   const baseUrl = parseSiteUrl(siteUrl);
   const rootPage = await getPage(baseUrl, fetchImpl);
   const normalizedRoutes = routes.map(parseRoute);
@@ -99,7 +110,14 @@ export async function checkGithubPagesRoutes({ siteUrl, routes = ['terms', 'beta
           ? 'ok'
           : 'http-error';
 
-    return { route: route ? `/${route}` : '/', url: url.href, status: page.status, title: page.title, result };
+    return {
+      route: route ? `/${route}` : '/',
+      url: url.href,
+      status: page.status,
+      title: page.title,
+      expectedClientPage: expectedClientPage(route),
+      result,
+    };
   }));
 
   const rootOk = rootPage.status < 400 && !rootPage.githubPagesNotFound;

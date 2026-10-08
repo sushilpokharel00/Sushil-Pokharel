@@ -52,9 +52,11 @@ output.
 
 The repository includes a stdio MCP server with a read-only
 `check_github_pages_routes` tool. It checks the site root and requested
-same-site routes, identifies GitHub Pages' generic 404 response, and recognizes
-the app shell served as a client-side route fallback. For safety, it only
-requests HTTPS sites hosted on `github.io`.
+same-site routes, identifies GitHub Pages' generic 404 response, recognizes
+the app shell served as a client-side route fallback, and labels the expected
+client page for known routes and unknown paths. By default, it checks the
+Terms page, beta page, and a probe path that should render the app's not-found
+page. For safety, it only requests HTTPS sites hosted on `github.io`.
 
 Run the server with `npm run mcp`, or open this repository in VS Code to load
 the server from `.vscode/mcp.json`. Pass a project Pages URL and optional
