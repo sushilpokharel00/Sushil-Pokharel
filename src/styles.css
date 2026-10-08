@@ -505,6 +505,70 @@ a:focus-visible {
   width: min(100%, 460px);
 }
 
+.github-section {
+  width: min(100%, 520px);
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  margin-top: 28px;
+  padding: 17px;
+  border: 1px solid #e5ebe7;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.75);
+  text-align: left;
+}
+
+.github-section-mark {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #eaf1ed;
+  color: #426b5e;
+}
+
+.github-section-mark svg {
+  width: 21px;
+  height: 21px;
+}
+
+.github-section-copy h2 {
+  margin: 0 0 4px;
+  color: #283541;
+  font: 700 13px/1.4 'Manrope', sans-serif;
+}
+
+.github-section-copy p {
+  margin: 0;
+  color: #748078;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.github-section-actions {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+}
+
+.github-section-link,
+.github-section-repository {
+  color: #416a5c;
+  font-size: 10px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.github-section-link:hover,
+.github-section-repository:hover {
+  color: #315648;
+}
+
 .maintenance-email-link,
 .maintenance-terms-link {
   min-height: 46px;
@@ -1459,6 +1523,17 @@ p {
   .maintenance-email-link,
   .maintenance-terms-link {
     width: 100%;
+  }
+
+  .github-section {
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .github-section-mark {
+    width: 34px;
+    height: 34px;
   }
 
   .footer-inner {
