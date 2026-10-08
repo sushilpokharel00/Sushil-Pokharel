@@ -17,6 +17,10 @@ const sections = [
   { id: 'contact', title: 'Contact us' },
 ];
 
+function sitePath(path = '/') {
+  return `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`;
+}
+
 function setPageMetadata(title, description) {
   document.title = title;
   document.querySelector('meta[name="description"]')?.setAttribute('content', description);
@@ -24,7 +28,7 @@ function setPageMetadata(title, description) {
 
 function Brand() {
   return (
-    <a className="brand" href="/" aria-label="Sushil Pokharel home">
+    <a className="brand" href={sitePath()} aria-label="Sushil Pokharel home">
       <span className="brand-mark" aria-hidden="true">
         <span>SP</span>
       </span>
@@ -42,16 +46,16 @@ function ArrowIcon() {
 }
 
 function Header() {
-  const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+  const pathname = getPagePathname();
 
   return (
     <header className="site-header">
       <div className="header-inner">
         <Brand />
         <nav className="header-nav" aria-label="Main navigation">
-          <a href="/terms" aria-current={pathname === '/terms' ? 'page' : undefined}>Terms</a>
+          <a href={sitePath('/terms')} aria-current={pathname === '/terms' ? 'page' : undefined}>Terms</a>
           <a
-            href="/beta"
+            href={sitePath('/beta')}
             aria-current={pathname === '/beta' || pathname === '/beta-requested' ? 'page' : undefined}
           >
             Beta access
@@ -62,12 +66,21 @@ function Header() {
   );
 }
 
+function getPagePathname() {
+  const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+  const basePath = import.meta.env.BASE_URL.replace(/\/+$/, '');
+
+  if (!basePath || basePath === '/') return pathname;
+  if (pathname === basePath) return '/';
+  return pathname.startsWith(`${basePath}/`) ? pathname.slice(basePath.length) : pathname;
+}
+
 function Footer() {
   return (
     <footer className="site-footer">
       <div className="footer-inner">
         <Brand />
-        <a className="footer-email" href="/beta">Beta access by request</a>
+        <a className="footer-email" href={sitePath('/beta')}>Beta access by request</a>
         <span>Lokanthali, Bhaktapur, Nepal · © {new Date().getFullYear()} Sushil Pokharel</span>
       </div>
     </footer>
@@ -130,7 +143,7 @@ function TermsPage() {
       <main>
         <div className="page-shell">
           <div className="breadcrumb">
-            <a href="/">Home</a>
+            <a href={sitePath()}>Home</a>
             <span aria-hidden="true">/</span>
             <span>Terms &amp; Conditions</span>
           </div>
@@ -661,7 +674,7 @@ function MaintenancePage() {
           </div>
 
           <div className="maintenance-policy-link">
-            <a className="maintenance-terms-link" href="/terms">
+            <a className="maintenance-terms-link" href={sitePath('/terms')}>
               View Terms &amp; Conditions <ArrowIcon />
             </a>
           </div>
@@ -688,14 +701,15 @@ function BetaRequestPage() {
     const name = formData.get('name').toString().trim();
     const email = formData.get('email').toString().trim();
     const message = formData.get('message').toString().trim();
+    const acceptedTerms = formData.get('termsAccepted') === 'on';
 
-    if (!name || !email || !message) {
-      setFormError('Please complete each field before continuing.');
+    if (!name || !email || !message || !acceptedTerms) {
+      setFormError('Complete each field and accept the beta access terms before continuing.');
       return;
     }
 
     setFormError('');
-    const body = `Beta access request\n\nName: ${name}\nEmail: ${email}\n\n${message}`;
+    const body = `Beta access request\n\nName: ${name}\nEmail: ${email}\nBeta access terms acknowledged: Yes\n\n${message}`;
     const gmailUrl = new URL('https://mail.google.com/mail/');
     gmailUrl.searchParams.set('view', 'cm');
     gmailUrl.searchParams.set('fs', '1');
@@ -713,7 +727,7 @@ function BetaRequestPage() {
     } catch (error) {
       console.error('Unable to save the beta request email fallback.', error);
     }
-    window.location.assign('/beta-requested?submitted=1');
+    window.location.assign(`${sitePath('/beta-requested')}?submitted=1`);
   }
 
   return (
@@ -722,7 +736,7 @@ function BetaRequestPage() {
       <main className="beta-page">
         <div className="beta-shell">
           <div className="breadcrumb">
-            <a href="/">Home</a>
+            <a href={sitePath()}>Home</a>
             <span aria-hidden="true">/</span>
             <span>Beta access</span>
           </div>
@@ -749,6 +763,36 @@ function BetaRequestPage() {
                     <p>Sushil will review your request.</p>
                   </div>
                 </div>
+                <section className="beta-terms" aria-labelledby="beta-terms-title">
+                  <h2 id="beta-terms-title">Beta access terms</h2>
+                  <ol>
+                    <li>
+                      <strong>Early-release software.</strong> Beta features may
+                      be incomplete, change without notice, or be unavailable at
+                      times. Do not rely on them for critical work; keep your own
+                      backups.
+                    </li>
+                    <li>
+                      <strong>Access and availability.</strong> Submitting a
+                      request does not guarantee an invitation. Access is
+                      provided at our discretion and may be changed or withdrawn.
+                    </li>
+                    <li>
+                      <strong>Feedback.</strong> You may choose to share
+                      feedback. You allow us to use it to improve the services
+                      without payment or restriction, while your submitted
+                      personal information remains subject to applicable privacy
+                      requirements.
+                    </li>
+                    <li>
+                      <strong>Other terms.</strong> These terms apply to beta
+                      participation alongside our{' '}
+                      <a href={sitePath('/terms')}>Terms &amp; Conditions</a>. A separate
+                      written agreement takes priority if it conflicts with
+                      these terms.
+                    </li>
+                  </ol>
+                </section>
               </div>
               <form className="contact-form beta-form" onSubmit={handleSubmit}>
                 <h2>Your details</h2>
@@ -767,6 +811,18 @@ function BetaRequestPage() {
                   <label htmlFor="beta-message">Why would you like beta access?</label>
                   <textarea id="beta-message" name="message" rows={5} maxLength={3000} required />
                 </div>
+                <label className="checkbox-row beta-terms-consent" htmlFor="beta-terms-accepted">
+                  <input
+                    id="beta-terms-accepted"
+                    name="termsAccepted"
+                    type="checkbox"
+                    required
+                  />
+                  <span>
+                    I have read and agree to the beta access terms and the{' '}
+                    <a href={sitePath('/terms')}>Terms &amp; Conditions</a>.
+                  </span>
+                </label>
                 <button className="contact-submit" type="submit">
                   Continue to Gmail <ArrowIcon />
                 </button>
@@ -780,7 +836,7 @@ function BetaRequestPage() {
               </form>
             </div>
           </section>
-          <a className="beta-back-link" href="/">Return to maintenance page</a>
+          <a className="beta-back-link" href={sitePath()}>Return to maintenance page</a>
         </div>
       </main>
       <Footer />
@@ -831,7 +887,7 @@ function BetaRequestConfirmationPage() {
                 Open draft in your email app <ArrowIcon />
               </a>
             )}
-            <a className="beta-back-link" href="/">Return to maintenance page</a>
+            <a className="beta-back-link" href={sitePath()}>Return to maintenance page</a>
           </div>
           <p className="confirmation-contact">
             Need help?{' '}
@@ -880,10 +936,10 @@ function NotFoundPage() {
             The link may be outdated, or the page may have moved. Check the
             address or return to the home page.
           </p>
-          <a className="primary-button" href="/">
+          <a className="primary-button" href={sitePath()}>
             Back to home <ArrowIcon />
           </a>
-          <a className="secondary-link" href="/terms">Visit our Terms &amp; Conditions</a>
+          <a className="secondary-link" href={sitePath('/terms')}>Visit our Terms &amp; Conditions</a>
         </section>
       </main>
       <Footer />
@@ -892,7 +948,7 @@ function NotFoundPage() {
 }
 
 export default function App() {
-  const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+  const pathname = getPagePathname();
   if (pathname === '/beta') return <BetaRequestPage />;
   if (pathname === '/beta-requested') {
     return new URLSearchParams(window.location.search).has('submitted')

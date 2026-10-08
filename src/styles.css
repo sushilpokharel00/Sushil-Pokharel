@@ -330,6 +330,51 @@ a:focus-visible {
   line-height: 1.6;
 }
 
+.beta-terms {
+  margin-top: 31px;
+  padding-top: 24px;
+  border-top: 1px solid #e3eae5;
+}
+
+.beta-terms h2 {
+  margin: 0 0 14px;
+  color: #283541;
+  font: 700 15px/1.4 'Manrope', sans-serif;
+  letter-spacing: -0.2px;
+}
+
+.beta-terms ol {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding-left: 18px;
+  color: #647169;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.beta-terms li {
+  padding-left: 2px;
+}
+
+.beta-terms li::marker {
+  color: #668575;
+  font-weight: 700;
+}
+
+.beta-terms strong {
+  color: #40564a;
+  font-weight: 700;
+}
+
+.beta-terms a,
+.beta-terms-consent a {
+  color: #416a5c;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .beta-form {
   align-content: start;
   gap: 14px;
@@ -357,6 +402,15 @@ a:focus-visible {
   color: #89948d;
   font-size: 10px;
   line-height: 1.6;
+}
+
+.beta-terms-consent {
+  margin-top: 0;
+  color: #56665d;
+}
+
+.beta-terms-consent input {
+  flex: 0 0 15px;
 }
 
 .beta-card + .beta-back-link {

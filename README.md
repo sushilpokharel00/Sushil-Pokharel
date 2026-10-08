@@ -7,6 +7,7 @@ request flow, and a Terms & Conditions page.
 
 - Responsive layouts for desktop and mobile
 - Dedicated maintenance, beta request, confirmation, terms, and not-found pages
+- Beta participation terms with required applicant acknowledgement
 - Accessible navigation, forms, and status messages
 - Email drafts prepared for review before sending
 
@@ -39,6 +40,9 @@ npm run preview
 The generated site is written to `dist/`. Build output and installed
 dependencies are intentionally excluded from version control.
 
+Pushing to `main` builds and deploys the site to GitHub Pages using the
+workflow in `.github/workflows/deploy-pages.yml`.
+
 ## Project structure
 
 ```text
@@ -46,6 +50,7 @@ src/
   App.jsx       Page content and interactions
   main.jsx      React entry point
   styles.css    Responsive styles
+vite.config.js  Vite configuration for the GitHub Pages project path
 index.html      HTML entry point and metadata
 ```
 
