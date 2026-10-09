@@ -43,11 +43,22 @@ export default function AuthPage({ isAccountPage = false }) {
   const recoveryFlowRef = useRef(false);
 
   useEffect(() => {
+    const titles = {
+      'sign-in': 'Sign in',
+      'sign-up': 'Create an account',
+      'forgot-password': 'Reset your password',
+      account: 'Your account',
+      'new-password': 'Choose a new password',
+      'mfa-challenge': 'Verify your sign-in',
+      'mfa-enroll': 'Set up two-factor authentication',
+      'mfa-disable': 'Manage two-factor authentication',
+    };
+    const title = isAccountPage && screen === 'sign-in' ? 'Your account' : titles[screen] || 'Your account';
     setPageMetadata(
-      isAccountPage ? 'Your account | Sushil Pokharel' : 'Sign in | Sushil Pokharel',
-      'Sign in or create an account, manage your password, and set up authenticator-based two-factor authentication.',
+      `${title} | Sushil Pokharel`,
+      'Manage your account, sign-in details, and authenticator-based two-factor security.',
     );
-  }, [isAccountPage]);
+  }, [isAccountPage, screen]);
 
   useEffect(() => {
     if (!supabase) {
@@ -331,6 +342,12 @@ export default function AuthPage({ isAccountPage = false }) {
           <AuthField id="signup-name" label="Name" autoComplete="name" value={fullName} onChange={(event) => setFullName(event.target.value)} />
           <AuthField id="signup-email" label="Email address" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} />
           <AuthField id="signup-password" label="Password (at least 12 characters)" type="password" autoComplete="new-password" minLength={12} value={password} onChange={(event) => setPassword(event.target.value)} />
+          <label className="auth-consent">
+            <input type="checkbox" required />
+            <span>
+              I agree to the <a href={sitePath('/terms')}>Terms &amp; Conditions</a>.
+            </span>
+          </label>
           <button className="auth-submit" type="submit" disabled={busy}>{busy ? 'Creating account…' : 'Create account'}</button>
         </form>
         <p className="auth-switch">Already registered? <button type="button" onClick={() => goTo('sign-in')}>Sign in</button></p>
@@ -446,11 +463,24 @@ export default function AuthPage({ isAccountPage = false }) {
   return (
     <>
       <main className="auth-page">
-        <section className="auth-card" aria-live="polite">
-          {notice && <p className={`auth-notice ${notice.kind}`} role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.text}</p>}
-          {content}
-          <a className="auth-home-link" href={sitePath('/')}>Return to home</a>
-        </section>
+        <div className="auth-layout">
+          <aside className="auth-aside">
+            <span className="auth-aside-mark" aria-hidden="true">SP</span>
+            <span className="auth-eyebrow">YOUR ACCOUNT, YOUR CONTROL</span>
+            <h1>Good to have you here.</h1>
+            <p>Sign in or create an account to manage your profile and security settings.</p>
+            <ul className="auth-benefits">
+              <li><span>01</span><div><strong>Secure access</strong><small>Email confirmation and strong passwords help protect your account.</small></div></li>
+              <li><span>02</span><div><strong>Extra protection</strong><small>Enable an authenticator app for two-factor verification.</small></div></li>
+              <li><span>03</span><div><strong>Stay in control</strong><small>Manage your password and security preferences any time.</small></div></li>
+            </ul>
+          </aside>
+          <section className="auth-card" aria-live="polite">
+            {notice && <p className={`auth-notice ${notice.kind}`} role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.text}</p>}
+            {content}
+            <a className="auth-home-link" href={sitePath('/')}>Return to home</a>
+          </section>
+        </div>
       </main>
     </>
   );

@@ -180,7 +180,7 @@ function TermsPage() {
                   <path d="M6.5 2.75v3M13.5 2.75v3M3.5 8h13" />
                 </svg>
               </span>
-              <span>Last updated: <strong>October 8, 2026</strong></span>
+              <span>Last updated: <strong>October 9, 2026</strong></span>
               <span className="meta-divider" />
               <span>Estimated reading time: <strong>8 minutes</strong></span>
             </div>
@@ -247,6 +247,14 @@ function TermsPage() {
                   You are responsible for activity under your account, except
                   to the extent it results from our failure to use reasonable
                   security measures or a breach by us of these Terms.
+                </p>
+                <p>
+                  Some account features require email confirmation and may
+                  include authenticator-based two-factor verification. Keep
+                  your contact details current and protect your sign-in
+                  credentials and verification methods. Authentication and
+                  account features may rely on third-party providers, which
+                  process information under their own terms and privacy notices.
                 </p>
               </Section>
 
