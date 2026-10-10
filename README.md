@@ -160,8 +160,9 @@ the content. The site never contains a service-role key. Do not grant the admin
 role through user-editable `user_metadata`.
 
 Signed-in users can submit private support requests at `/support` and view
-administrator replies there. The admin MCP tools use the local service-role
-key to list requests and save replies; keep the MCP server on a trusted machine.
+administrator replies there. MFA-verified administrators can answer requests
+from `/admin`; the admin MCP tools can also list requests and save replies from
+a trusted local server.
 The online/offline indicator is a manually managed availability status, not
 real-time presence.
 Apply the support-request migration before using `/support` or the admin inbox.

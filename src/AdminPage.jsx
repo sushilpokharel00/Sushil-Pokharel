@@ -13,7 +13,9 @@ export default function AdminPage() {
   const [access, setAccess] = useState('checking');
   const [settings, setSettings] = useState(defaultSettings);
   const [requests, setRequests] = useState([]);
+  const [replyDrafts, setReplyDrafts] = useState({});
   const [requestsLoading, setRequestsLoading] = useState(false);
+  const [replyingTo, setReplyingTo] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
 
@@ -109,6 +111,37 @@ export default function AdminPage() {
       setNotice({ kind: 'error', text: error.message || 'Could not save site settings.' });
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleReply(event, request) {
+    event.preventDefault();
+    const reply = (replyDrafts[request.id] ?? '').trim();
+    if (!reply) {
+      setNotice({ kind: 'error', text: 'Enter a reply before sending it.' });
+      return;
+    }
+
+    setReplyingTo(request.id);
+    setNotice(null);
+    try {
+      const { data, error } = await supabase
+        .from('support_requests')
+        .update({ admin_reply: reply, replied_at: new Date().toISOString() })
+        .eq('id', request.id)
+        .select('id, admin_reply, replied_at')
+        .single();
+      if (error) throw error;
+
+      setRequests((current) => current.map((item) => (
+        item.id === data.id ? { ...item, ...data } : item
+      )));
+      setReplyDrafts((current) => ({ ...current, [request.id]: '' }));
+      setNotice({ kind: 'success', text: 'Your reply has been sent and is visible in the user’s support inbox.' });
+    } catch (error) {
+      setNotice({ kind: 'error', text: error.message || 'Could not send your reply.' });
+    } finally {
+      setReplyingTo('');
     }
   }
 
@@ -210,7 +243,7 @@ export default function AdminPage() {
               {requestsLoading ? 'Refreshing…' : 'Refresh inbox'}
             </button>
           </div>
-          <p className="auth-description">Use the local MCP tools <code>list_support_requests</code> and <code>reply_to_support_request</code> to manage and answer requests. Replies appear in the requester’s signed-in support inbox.</p>
+          <p className="auth-description">Review each request and reply here. Replies appear in the requester’s signed-in support inbox. The MCP inbox tools are also available for trusted local administration.</p>
           {requests.length === 0 ? (
             <p className="support-empty">There are no support requests yet.</p>
           ) : (
@@ -225,11 +258,27 @@ export default function AdminPage() {
                   <p className="support-request-message">{request.message}</p>
                   {request.admin_reply && (
                     <div className="support-reply">
-                      <strong>Latest reply</strong>
+                      <strong>Latest reply · {request.replied_at ? new Date(request.replied_at).toLocaleString() : 'sent'}</strong>
                       <p>{request.admin_reply}</p>
                     </div>
                   )}
                   <time dateTime={request.created_at}>{new Date(request.created_at).toLocaleString()}</time>
+                  <form className="admin-reply-form" onSubmit={(event) => handleReply(event, request)}>
+                    <label htmlFor={`admin-reply-${request.id}`}>
+                      {request.admin_reply ? 'Update reply' : 'Write a reply'}
+                    </label>
+                    <textarea
+                      id={`admin-reply-${request.id}`}
+                      value={replyDrafts[request.id] ?? ''}
+                      onChange={(event) => setReplyDrafts((current) => ({ ...current, [request.id]: event.target.value }))}
+                      rows={3}
+                      maxLength={3000}
+                      required
+                    />
+                    <button className="auth-submit" type="submit" disabled={replyingTo === request.id || !replyDrafts[request.id]?.trim()}>
+                      {replyingTo === request.id ? 'Sending reply…' : request.admin_reply ? 'Update and send reply' : 'Send reply'}
+                    </button>
+                  </form>
                 </li>
               ))}
             </ul>
