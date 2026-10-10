@@ -31,8 +31,8 @@ jobs:
         run: npm ci
       - name: Build website
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://afbyphuozsdsajzngndq.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_X_XnP6cOHNY6mHAA5s7kDw_BrIhqxqF' }}
         run: |
           npm run build
           cp dist/app.html dist/index.html

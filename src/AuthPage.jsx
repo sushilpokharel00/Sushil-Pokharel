@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { supabase } from './lib/supabase.js';
+import { supabase, supabaseConfigurationError } from './lib/supabase.js';
 import { sitePath } from './site-path.js';
 
 function setPageMetadata(title, description) {
@@ -326,7 +326,9 @@ export default function AuthPage({ isAccountPage = false }) {
         <span className="auth-eyebrow">ACCOUNT SECURITY</span>
         <h1>Sign in is not configured</h1>
         <p className="auth-description">
-          Add the Supabase project URL and public anon key as GitHub Actions secrets, then redeploy this site.
+          {supabaseConfigurationError} For GitHub Pages, add these values as the
+          <code> VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code>
+          {' '}GitHub Actions secrets, then redeploy. Never use a service-role key in the website.
         </p>
       </>
     );

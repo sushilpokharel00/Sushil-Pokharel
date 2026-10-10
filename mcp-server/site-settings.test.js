@@ -78,7 +78,10 @@ test('requires local public storage configuration', async () => {
     readSiteSettings({ supabaseUrl: config.supabaseUrl, supabaseAnonKey: '' }),
     /SUPABASE_ANON_KEY/,
   );
-  await assert.rejects(readSiteSettings({ supabaseAnonKey: config.supabaseAnonKey }), /SUPABASE_URL/);
+  await assert.rejects(
+    readSiteSettings({ supabaseUrl: '', supabaseAnonKey: config.supabaseAnonKey }),
+    /SUPABASE_URL/,
+  );
 });
 
 test('rejects non-Supabase hosts before making authenticated requests', async () => {
