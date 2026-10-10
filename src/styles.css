@@ -1083,6 +1083,61 @@ a:focus-visible {
   background: #243f35;
 }
 
+.account-delete {
+  margin-top: 30px;
+  padding-top: 23px;
+  border-top: 1px solid #f0deda;
+}
+
+.account-delete h2 {
+  margin: 0 0 8px;
+  color: #8a3932;
+  font: 700 17px/1.35 'Manrope', sans-serif;
+}
+
+.account-delete > p {
+  margin: 0;
+  color: #7f706e;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.account-delete-button {
+  min-height: 43px;
+  padding: 10px 15px;
+  border: 1px solid #a63d34;
+  border-radius: 9px;
+  background: #a63d34;
+  color: #fff;
+  cursor: pointer;
+  font: 700 12px/1.35 'DM Sans', sans-serif;
+  transition: background 150ms ease, border-color 150ms ease, opacity 150ms ease;
+}
+
+.account-delete-button:hover:not(:disabled) {
+  border-color: #852b24;
+  background: #852b24;
+}
+
+.account-delete-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.account-delete > .account-delete-button {
+  margin-top: 15px;
+}
+
+.account-delete-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.account-delete-actions .auth-secondary {
+  min-height: 43px;
+}
+
 .auth-submit {
   min-height: 48px;
   box-shadow: 0 8px 17px rgba(49, 86, 72, 0.12);

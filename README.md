@@ -128,6 +128,16 @@ shown in `.env.example`. The MCP service-role key is read only by the Node MCP
 process; Vite does not expose it to the browser because it is not prefixed
 with `VITE_`.
 
+Users can permanently delete their own account from `/account` after entering
+`DELETE` to confirm. This calls the `delete-account` Supabase Edge Function,
+which validates the signed-in user and uses the server-side service-role key
+only to delete that same user's account. Related support requests are removed
+by the database foreign-key cascade. Deploy it with
+`supabase functions deploy delete-account`; configure the function's
+`SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` secrets
+in the Supabase project settings. Never put the service-role key in Vite
+environment variables or the GitHub Pages build.
+
 ## Admin dashboard
 
 After setting up Supabase, apply both
@@ -183,6 +193,7 @@ mcp-server/
   pages-checker.js  GitHub Pages route diagnostics
   pages-checker.test.js
 supabase/
+  functions/delete-account/  Authenticated self-service account deletion
   migrations/   Public status and private support tables with access policies
 app.html        Vite HTML source template
 vite.config.js  Vite configuration for the GitHub Pages project path

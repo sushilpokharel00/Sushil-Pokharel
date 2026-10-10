@@ -40,6 +40,8 @@ export default function AuthPage({ isAccountPage = false }) {
   const [fullName, setFullName] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const recoveryFlowRef = useRef(false);
 
   useEffect(() => {
@@ -313,6 +315,28 @@ export default function AuthPage({ isAccountPage = false }) {
     );
   }
 
+  async function handleDeleteAccount(event) {
+    event.preventDefault();
+    if (deleteConfirmation !== 'DELETE') {
+      setNotice({ kind: 'error', text: 'Type DELETE exactly to confirm account deletion.' });
+      return;
+    }
+
+    await runAction(
+      () => supabase.functions.invoke('delete-account'),
+      async () => {
+        const { error } = await supabase.auth.signOut({ scope: 'local' });
+        setSession(null);
+        setScreen('sign-in');
+        setDeleteConfirmation('');
+        setShowDeleteConfirmation(false);
+        setNotice(error
+          ? { kind: 'error', text: 'Your account was deleted, but this browser could not clear its saved session. Sign out and clear this site’s stored session.' }
+          : { kind: 'success', text: 'Your account and associated support requests have been deleted.' });
+      },
+    );
+  }
+
   function goTo(nextScreen) {
     setNotice(null);
     setScreen(nextScreen);
@@ -446,6 +470,49 @@ export default function AuthPage({ isAccountPage = false }) {
           <button className="auth-submit" type="submit" disabled={busy}>{busy ? 'Updating…' : 'Change password'}</button>
         </form>
         <button className="auth-signout" type="button" onClick={handleSignOut} disabled={busy}>Sign out</button>
+        <section className="account-delete">
+          <h2>Delete account</h2>
+          <p>This permanently deletes your account and associated support requests. This action cannot be undone.</p>
+          {!showDeleteConfirmation ? (
+            <button
+              className="account-delete-button"
+              type="button"
+              onClick={() => setShowDeleteConfirmation(true)}
+              disabled={busy}
+            >
+              Delete my account
+            </button>
+          ) : (
+            <form className="auth-form" onSubmit={handleDeleteAccount}>
+              <div className="auth-field">
+                <label htmlFor="delete-account-confirmation">Type DELETE to confirm</label>
+                <input
+                  id="delete-account-confirmation"
+                  autoComplete="off"
+                  value={deleteConfirmation}
+                  onChange={(event) => setDeleteConfirmation(event.target.value)}
+                  required
+                />
+              </div>
+              <div className="account-delete-actions">
+                <button className="account-delete-button" type="submit" disabled={busy || deleteConfirmation !== 'DELETE'}>
+                  {busy ? 'Deleting account…' : 'Permanently delete account'}
+                </button>
+                <button
+                  className="auth-secondary"
+                  type="button"
+                  onClick={() => {
+                    setDeleteConfirmation('');
+                    setShowDeleteConfirmation(false);
+                  }}
+                  disabled={busy}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+        </section>
       </>
     );
   } else {
