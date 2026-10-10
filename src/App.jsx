@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import AdminPage from './AdminPage.jsx';
 import AuthPage from './AuthPage.jsx';
+import SupportPage from './SupportPage.jsx';
 import { sitePath } from './site-path.js';
 import { supabase } from './lib/supabase.js';
 
@@ -37,19 +38,6 @@ function Brand() {
   );
 }
 
-function GitHubLink({ className }) {
-  return (
-    <a
-      className={className}
-      href="https://github.com/sushilpokharel00"
-      target="_blank"
-      rel="noreferrer"
-    >
-      GitHub
-    </a>
-  );
-}
-
 function ArrowIcon() {
   return (
     <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
@@ -76,7 +64,7 @@ function Header() {
           <a href={sitePath('/account')} aria-current={pathname === '/account' || pathname === '/login' ? 'page' : undefined}>
             Sign in
           </a>
-          <GitHubLink className="header-github-link" />
+          <a href={sitePath('/support')} aria-current={pathname === '/support' ? 'page' : undefined}>Support</a>
         </nav>
       </div>
     </header>
@@ -98,7 +86,7 @@ function Footer() {
       <div className="footer-inner">
         <Brand />
         <a className="footer-email" href={sitePath('/beta')}>Beta access by request</a>
-        <GitHubLink className="footer-github-link" />
+        <a className="footer-support-link" href={sitePath('/support')}>Support</a>
         <span>Lokanthali, Bhaktapur, Nepal · © {new Date().getFullYear()} Sushil Pokharel</span>
       </div>
     </footer>
@@ -180,7 +168,7 @@ function TermsPage() {
                   <path d="M6.5 2.75v3M13.5 2.75v3M3.5 8h13" />
                 </svg>
               </span>
-              <span>Last updated: <strong>October 9, 2026</strong></span>
+              <span>Last updated: <strong>October 10, 2026</strong></span>
               <span className="meta-divider" />
               <span>Estimated reading time: <strong>8 minutes</strong></span>
             </div>
@@ -255,6 +243,14 @@ function TermsPage() {
                   credentials and verification methods. Authentication and
                   account features may rely on third-party providers, which
                   process information under their own terms and privacy notices.
+                </p>
+                <p>
+                  If you submit a support request, we store the account ID,
+                  email address, subject, and message you provide so the
+                  support team can review and respond. Your request and any
+                  reply are available to you in your signed-in support inbox.
+                  Do not include passwords, authentication codes, or other
+                  sensitive information in a support request.
                 </p>
               </Section>
 
@@ -499,6 +495,7 @@ function MaintenancePage() {
     is_maintenance: true,
     maintenance_title: 'We’re making improvements.',
     maintenance_message: 'The website is temporarily under maintenance while we work on updates. There’s no confirmed reopening date yet. In the meantime, contact Sushil or request beta access.',
+    support_online: false,
   });
   const [settingsWarning, setSettingsWarning] = useState('');
 
@@ -515,7 +512,7 @@ function MaintenancePage() {
     let isMounted = true;
     supabase
       .from('site_settings')
-      .select('is_maintenance, maintenance_title, maintenance_message')
+      .select('is_maintenance, maintenance_title, maintenance_message, support_online')
       .eq('id', 1)
       .single()
       .then(({ data, error }) => {
@@ -647,6 +644,11 @@ function MaintenancePage() {
               release, choose Request beta access.
             </span>
           </div>
+          <div className="support-callout">
+            <span className={`support-status-dot ${siteSettings.support_online ? 'is-online' : ''}`} aria-hidden="true" />
+            <span>Support team is {siteSettings.support_online ? 'online' : 'offline'}</span>
+            <a href={sitePath('/support')}>Get support <ArrowIcon /></a>
+          </div>
           <div className="request-toggle-row" aria-label="Contact options">
             <button
               type="button"
@@ -737,28 +739,6 @@ function MaintenancePage() {
               View Terms &amp; Conditions <ArrowIcon />
             </a>
           </div>
-          <section className="github-section" aria-labelledby="github-section-title">
-            <div className="github-section-mark" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 .9a11.1 11.1 0 0 0-3.51 21.63c.55.1.76-.24.76-.54v-2.08c-3.1.67-3.76-1.32-3.76-1.32-.5-1.28-1.24-1.62-1.24-1.62-1.01-.69.08-.68.08-.68 1.12.08 1.71 1.15 1.71 1.15 1 .1.77 2.04 3.62 1.44.1-.72.39-1.2.7-1.48-2.48-.28-5.09-1.24-5.09-5.52 0-1.22.43-2.22 1.15-3-.12-.28-.5-1.42.11-2.96 0 0 .94-.3 3.05 1.15a10.6 10.6 0 0 1 5.55 0c2.12-1.45 3.05-1.15 3.05-1.15.61 1.54.23 2.68.11 2.96.72.78 1.15 1.78 1.15 3 0 4.29-2.62 5.24-5.11 5.51.4.35.75 1.03.75 2.08v3.12c0 .3.2.65.77.54A11.1 11.1 0 0 0 12 .9Z" />
-              </svg>
-            </div>
-            <div className="github-section-copy">
-              <h2 id="github-section-title">Find me on GitHub</h2>
-              <p>Explore my projects, code, and the repository behind this website.</p>
-            </div>
-            <div className="github-section-actions">
-              <GitHubLink className="github-section-link" />
-              <a
-                className="github-section-repository"
-                href="https://github.com/sushilpokharel00/Sushil-Pokharel"
-                target="_blank"
-                rel="noreferrer"
-              >
-                View this repository
-              </a>
-            </div>
-          </section>
         </section>
       </main>
       <Footer />
@@ -1044,6 +1024,15 @@ export default function App() {
       <>
         <Header />
         <AuthPage isAccountPage={pathname === '/account'} />
+        <Footer />
+      </>
+    );
+  }
+  if (pathname === '/support') {
+    return (
+      <>
+        <Header />
+        <SupportPage />
         <Footer />
       </>
     );

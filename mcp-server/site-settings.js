@@ -1,6 +1,6 @@
 import './load-env.js';
 
-const settingsFields = 'id,is_maintenance,maintenance_title,maintenance_message,updated_at';
+const settingsFields = 'id,is_maintenance,maintenance_title,maintenance_message,support_online,updated_at';
 const requestTimeoutMs = 10_000;
 
 export class SiteSettingsError extends Error {
@@ -46,6 +46,7 @@ function getRow(rows) {
     typeof row.is_maintenance !== 'boolean' ||
     typeof row.maintenance_title !== 'string' ||
     typeof row.maintenance_message !== 'string' ||
+    typeof row.support_online !== 'boolean' ||
     typeof row.updated_at !== 'string'
   ) {
     throw new Error('Supabase returned invalid site settings data.');
@@ -72,6 +73,7 @@ function toPublicResult(row) {
       isMaintenance: row.is_maintenance,
       title: row.maintenance_title,
       message: row.maintenance_message,
+      supportOnline: row.support_online,
       updatedAt: row.updated_at,
     },
     recommendation: 'Site settings are stored in Supabase. Use the local MCP update tool or MFA-protected website admin dashboard to change them.',
@@ -182,7 +184,7 @@ export async function checkSiteStorage(config = {}, fetchImpl = fetch) {
 }
 
 export async function updateSiteSettings(
-  { isMaintenance, title, message },
+  { isMaintenance, title, message, supportOnline },
   {
     supabaseUrl = process.env.SUPABASE_URL,
     serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -202,6 +204,9 @@ export async function updateSiteSettings(
   if (typeof message !== 'string' || message.trim().length < 1 || message.trim().length > 500) {
     throw new TypeError('message must contain between 1 and 500 characters.');
   }
+  if (supportOnline !== undefined && typeof supportOnline !== 'boolean') {
+    throw new TypeError('supportOnline must be true or false.');
+  }
 
   const key = serviceRoleKey.trim();
   const rows = await requestRows({
@@ -213,6 +218,7 @@ export async function updateSiteSettings(
       is_maintenance: isMaintenance,
       maintenance_title: title.trim(),
       maintenance_message: message.trim(),
+      ...(supportOnline === undefined ? {} : { support_online: supportOnline }),
     },
     fetchImpl,
   });
@@ -229,6 +235,7 @@ export async function updateSiteSettings(
       isMaintenance: row.is_maintenance,
       title: row.maintenance_title,
       message: row.maintenance_message,
+      supportOnline: row.support_online,
       updatedAt: row.updated_at,
     },
   };

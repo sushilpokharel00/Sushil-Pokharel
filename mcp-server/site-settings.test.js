@@ -21,6 +21,7 @@ const row = {
   is_maintenance: false,
   maintenance_title: 'We are open',
   maintenance_message: 'Welcome back.',
+  support_online: true,
   updated_at: '2026-10-08T12:00:00Z',
 };
 
@@ -42,6 +43,7 @@ test('reads website settings using the public key and never returns credentials'
     isMaintenance: false,
     title: 'We are open',
     message: 'Welcome back.',
+    supportOnline: true,
     updatedAt: row.updated_at,
   });
   assert.equal(JSON.stringify(result).includes(config.supabaseAnonKey), false);
@@ -112,6 +114,7 @@ test('updates site settings with the local service-role key without returning it
       is_maintenance: true,
       maintenance_title: 'Planned maintenance',
       maintenance_message: 'Back soon.',
+      support_online: false,
     }]);
   });
 
@@ -126,7 +129,25 @@ test('updates site settings with the local service-role key without returning it
   });
   assert.equal(result.updated, true);
   assert.equal(result.settings.title, 'Planned maintenance');
+  assert.equal(result.settings.supportOnline, false);
   assert.equal(JSON.stringify(result).includes(config.serviceRoleKey), false);
+});
+
+test('updates support availability when requested', async () => {
+  let requestBody;
+  await updateSiteSettings({
+    isMaintenance: false,
+    title: 'Open',
+    message: 'Welcome.',
+    supportOnline: true,
+  }, {
+    supabaseUrl: config.supabaseUrl,
+    serviceRoleKey: config.serviceRoleKey,
+  }, async (_url, options) => {
+    requestBody = JSON.parse(options.body);
+    return jsonResponse(200, [{ ...row, support_online: true }]);
+  });
+  assert.equal(requestBody.support_online, true);
 });
 
 test('requires a local service-role key for storage updates', async () => {

@@ -10,6 +10,8 @@ request flow, and a Terms & Conditions page.
 - Beta participation terms with required applicant acknowledgement
 - Accessible navigation, forms, and status messages
 - Email drafts prepared for review before sending
+- Account-protected support requests with an admin inbox and MCP-managed replies
+- Admin-controlled support availability indicator
 - Supabase email/password accounts, authenticator-app MFA, and password recovery
 - MFA-protected admin dashboard for the public home-page status and message
 
@@ -80,6 +82,9 @@ The MCP server exposes these tools:
 - `get_site_settings` — read current public website-status settings.
 - `update_site_settings` — update the status, heading, and message using the
   local service-role key.
+- `list_support_requests` — read the latest 100 customer support requests.
+- `reply_to_support_request` — send a response to a request; it appears in the
+  requester’s signed-in support inbox.
 - `grant_site_admin` — promote a confirmed account only after it has verified
   TOTP MFA and the caller repeats its email for confirmation.
 - `check_github_pages_routes` — check the deployed website routes.
@@ -122,11 +127,12 @@ with `VITE_`.
 
 ## Admin dashboard
 
-After setting up Supabase, apply
-`supabase/migrations/20261008000000_site_settings.sql` in the Supabase SQL
-Editor. The home page reads the public maintenance status and message from this
-table. `/admin` lets an administrator update the availability switch, heading,
-and message.
+After setting up Supabase, apply both
+`supabase/migrations/20261008000000_site_settings.sql` and
+`supabase/migrations/20261010000000_support_requests.sql` in the Supabase SQL
+Editor. The home page reads the public maintenance status, message, and support
+availability from the settings table. `/admin` lets an administrator update
+these settings and view the latest support requests.
 
 There is intentionally no default admin username or password. Create and
 confirm your own account at `/account`, enable and verify an authenticator,
@@ -140,12 +146,21 @@ Supabase-managed `app_metadata` with an `aal2` (MFA-verified) session to update
 the content. The site never contains a service-role key. Do not grant the admin
 role through user-editable `user_metadata`.
 
+Signed-in users can submit private support requests at `/support` and view
+administrator replies there. The admin MCP tools use the local service-role
+key to list requests and save replies; keep the MCP server on a trusted machine.
+The online/offline indicator is a manually managed availability status, not
+real-time presence.
+Apply the support-request migration before using `/support` or the admin inbox.
+The inbox and replies use the local MCP server; they do not send email.
+
 ## Project structure
 
 ```text
 src/
-  AdminPage.jsx Admin-only home-page status editor
+  AdminPage.jsx Admin-only status editor and support inbox
   AuthPage.jsx  Account, sign-in, signup, MFA, and password flows
+  SupportPage.jsx Signed-in support requests and replies
   App.jsx       Page content and interactions
   lib/
     supabase.js Supabase Auth client
@@ -159,11 +174,13 @@ mcp-server/
   admin-users.test.js
   site-settings.js  Supabase status read/update operations
   site-settings.test.js
+  support-inbox.js  Supabase support request and reply operations
+  support-inbox.test.js
   load-env.js       Loads ignored local .env for MCP only
   pages-checker.js  GitHub Pages route diagnostics
   pages-checker.test.js
 supabase/
-  migrations/   Public status table with admin/MFA-only update policies
+  migrations/   Public status and private support tables with access policies
 app.html        Vite HTML source template
 vite.config.js  Vite configuration for the GitHub Pages project path
 index.html      Generated GitHub Pages entry point

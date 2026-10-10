@@ -19,6 +19,8 @@ test('serves the route checker over MCP stdio', async () => {
     assert.ok(tools.some(({ name }) => name === 'get_site_settings'));
     assert.ok(tools.some(({ name }) => name === 'update_site_settings'));
     assert.ok(tools.some(({ name }) => name === 'grant_site_admin'));
+    assert.ok(tools.some(({ name }) => name === 'list_support_requests'));
+    assert.ok(tools.some(({ name }) => name === 'reply_to_support_request'));
   } finally {
     await client.close();
   }

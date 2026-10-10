@@ -331,7 +331,12 @@ export default function AuthPage({ isAccountPage = false }) {
       </>
     );
   } else if (screen === 'loading') {
-    content = <p className="auth-description" role="status">Checking your sign-in session…</p>;
+    content = (
+      <div className="auth-loading" role="status">
+        <span className="loading-spinner" aria-hidden="true" />
+        <span>Securely checking your sign-in session…</span>
+      </div>
+    );
   } else if (screen === 'sign-up') {
     content = (
       <>

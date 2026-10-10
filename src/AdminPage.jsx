@@ -6,13 +6,31 @@ const defaultSettings = {
   is_maintenance: true,
   maintenance_title: 'We’re making improvements.',
   maintenance_message: 'The website is temporarily under maintenance while we work on updates. There’s no confirmed reopening date yet. In the meantime, contact Sushil or request beta access.',
+  support_online: false,
 };
 
 export default function AdminPage() {
   const [access, setAccess] = useState('checking');
   const [settings, setSettings] = useState(defaultSettings);
+  const [requests, setRequests] = useState([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
+
+  async function loadSupportRequests() {
+    setRequestsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('support_requests')
+        .select('id, requester_email, subject, message, admin_reply, created_at, replied_at')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      setRequests(data);
+    } finally {
+      setRequestsLoading(false);
+    }
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -43,10 +61,11 @@ export default function AdminPage() {
 
       const { data, error } = await supabase
         .from('site_settings')
-        .select('is_maintenance, maintenance_title, maintenance_message, updated_at')
+        .select('is_maintenance, maintenance_title, maintenance_message, support_online, updated_at')
         .eq('id', 1)
         .single();
       if (error) throw error;
+      await loadSupportRequests();
 
       if (isMounted) {
         setSettings(data);
@@ -78,9 +97,10 @@ export default function AdminPage() {
           is_maintenance: settings.is_maintenance,
           maintenance_title: settings.maintenance_title.trim(),
           maintenance_message: settings.maintenance_message.trim(),
+          support_online: settings.support_online,
         })
         .eq('id', 1)
-        .select('is_maintenance, maintenance_title, maintenance_message, updated_at')
+        .select('is_maintenance, maintenance_title, maintenance_message, support_online, updated_at')
         .single();
       if (error) throw error;
       setSettings(data);
@@ -94,7 +114,12 @@ export default function AdminPage() {
 
   let content;
   if (access === 'checking') {
-    content = <p className="auth-description" role="status">Checking administrator access…</p>;
+    content = (
+      <div className="auth-loading" role="status">
+        <span className="loading-spinner" aria-hidden="true" />
+        <span>Checking administrator access…</span>
+      </div>
+    );
   } else if (access === 'unconfigured') {
     content = (
       <>
@@ -141,6 +166,14 @@ export default function AdminPage() {
             />
             <span>Website is under maintenance</span>
           </label>
+          <label className="admin-checkbox">
+            <input
+              type="checkbox"
+              checked={settings.support_online}
+              onChange={(event) => setSettings((current) => ({ ...current, support_online: event.target.checked }))}
+            />
+            <span>Support team is online and available</span>
+          </label>
           <div className="auth-field">
             <label htmlFor="admin-maintenance-title">Home-page heading</label>
             <input
@@ -167,6 +200,41 @@ export default function AdminPage() {
           </button>
         </form>
         {settings.updated_at && <p className="admin-updated">Last saved: {new Date(settings.updated_at).toLocaleString()}</p>}
+        <section className="admin-support-inbox" aria-labelledby="admin-support-title">
+          <div className="admin-inbox-heading">
+            <div>
+              <span className="auth-eyebrow">CUSTOMER SUPPORT</span>
+              <h2 id="admin-support-title">Support requests</h2>
+            </div>
+            <button className="auth-secondary" type="button" onClick={() => loadSupportRequests().catch((error) => setNotice({ kind: 'error', text: error.message || 'Could not refresh support requests.' }))} disabled={requestsLoading}>
+              {requestsLoading ? 'Refreshing…' : 'Refresh inbox'}
+            </button>
+          </div>
+          <p className="auth-description">Use the local MCP tools <code>list_support_requests</code> and <code>reply_to_support_request</code> to manage and answer requests. Replies appear in the requester’s signed-in support inbox.</p>
+          {requests.length === 0 ? (
+            <p className="support-empty">There are no support requests yet.</p>
+          ) : (
+            <ul className="support-request-list">
+              {requests.map((request) => (
+                <li className="support-request" key={request.id}>
+                  <div className="support-request-heading">
+                    <h3>{request.subject}</h3>
+                    <span>{request.admin_reply ? 'Replied' : 'Awaiting reply'}</span>
+                  </div>
+                  <p className="support-request-email">{request.requester_email}</p>
+                  <p className="support-request-message">{request.message}</p>
+                  {request.admin_reply && (
+                    <div className="support-reply">
+                      <strong>Latest reply</strong>
+                      <p>{request.admin_reply}</p>
+                    </div>
+                  )}
+                  <time dateTime={request.created_at}>{new Date(request.created_at).toLocaleString()}</time>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </>
     );
   } else {
