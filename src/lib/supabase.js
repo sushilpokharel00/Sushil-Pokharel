@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() ?? '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() ?? '';
+const supabaseAnonKey = (
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+  || import.meta.env.VITE_SUPABASE_ANON_KEY
+  || ''
+).trim();
 
 function isServiceRoleKey(key) {
   if (key.startsWith('sb_secret_')) return true;
@@ -18,7 +22,7 @@ function isServiceRoleKey(key) {
 
 function validateConfiguration(urlValue, key) {
   if (!urlValue || !key) {
-    return 'Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your Supabase project URL and public anon/publishable key.';
+    return 'Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY to your Supabase project URL and public publishable key.';
   }
 
   let url;
@@ -41,7 +45,7 @@ function validateConfiguration(urlValue, key) {
   }
 
   if (isServiceRoleKey(key)) {
-    return 'VITE_SUPABASE_ANON_KEY must be the public anon/publishable key, never a service-role or secret key.';
+    return 'VITE_SUPABASE_PUBLISHABLE_KEY must be the public key, never a service-role or secret key.';
   }
 
   return '';

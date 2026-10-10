@@ -327,7 +327,7 @@ export default function AuthPage({ isAccountPage = false }) {
         <h1>Sign in is not configured</h1>
         <p className="auth-description">
           {supabaseConfigurationError} For GitHub Pages, add these values as the
-          <code> VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code>
+          <code> VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code>
           {' '}GitHub Actions secrets, then redeploy. Never use a service-role key in the website.
         </p>
       </>

@@ -111,8 +111,10 @@ the website does not store account passwords itself.
 Create a Supabase project, enable email/password authentication, and set the
 email-confirmation and password policies in the Supabase dashboard. The deploy
 workflow is configured with this project's public URL and publishable key as
-fallback values; optional `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
-repository secrets override those defaults. These public client configuration
+fallback values; optional `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_PUBLISHABLE_KEY` repository secrets override those defaults.
+The client also accepts the older `VITE_SUPABASE_ANON_KEY` name as a fallback.
+These public client configuration
 values are embedded in the generated website bundle; never use a Supabase
 service-role key in the browser or GitHub Pages.
 Allow the following redirect URL in Supabase Auth URL Configuration:
