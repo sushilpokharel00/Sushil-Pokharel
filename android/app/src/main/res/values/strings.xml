@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Sushil Pokharel</string>
+    <string name="title_activity_main">Sushil Pokharel</string>
+    <string name="package_name">com.sushilpokharel.terms</string>
+    <string name="custom_url_scheme">com.sushilpokharel.terms</string>
+</resources>

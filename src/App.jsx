@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import AdminPage from './AdminPage.jsx';
 import AuthPage from './AuthPage.jsx';
 import SupportPage from './SupportPage.jsx';
+import { openExternalUrl } from './native-app.js';
 import { sitePath } from './site-path.js';
 import { supabase } from './lib/supabase.js';
 
@@ -138,7 +139,7 @@ function TermsPage() {
     fallbackUrl.searchParams.set('subject', subject);
     fallbackUrl.searchParams.set('body', body);
 
-    window.open(gmailComposeUrl.toString(), '_blank', 'noopener,noreferrer');
+    void openExternalUrl(gmailComposeUrl.toString());
     setFallbackEmailUrl(fallbackUrl.toString());
     setContactStatus('Gmail should open in a new tab with your message addressed to Sushil. Sign in if prompted, then review and send your email.');
   }
@@ -567,7 +568,7 @@ function MaintenancePage() {
     fallbackUrl.searchParams.set('subject', subject);
     fallbackUrl.searchParams.set('body', body);
 
-    window.open(gmailComposeUrl.toString(), '_blank', 'noopener,noreferrer');
+    void openExternalUrl(gmailComposeUrl.toString());
     setContactStatus('Your message is ready in Gmail. Review and send it to complete your enquiry.');
     setActiveForm('contact');
     window.sessionStorage.setItem('maintenance-contact-fallback', fallbackUrl.toString());
@@ -607,7 +608,7 @@ function MaintenancePage() {
     emailUrl.searchParams.set('subject', 'Beta access request');
     emailUrl.searchParams.set('body', body);
 
-    window.open(gmailUrl.toString(), '_blank', 'noopener,noreferrer');
+    void openExternalUrl(gmailUrl.toString());
     setBetaStatus('Your beta request is ready in Gmail. Review and send it to confirm your interest.');
     setActiveForm('beta');
     window.sessionStorage.setItem('beta-access-email-fallback', emailUrl.toString());
@@ -782,7 +783,7 @@ function BetaRequestPage() {
     emailUrl.searchParams.set('subject', 'Beta access request');
     emailUrl.searchParams.set('body', body);
 
-    window.open(gmailUrl.toString(), '_blank', 'noopener,noreferrer');
+    void openExternalUrl(gmailUrl.toString());
     try {
       window.sessionStorage.setItem('beta-access-email-fallback', emailUrl.toString());
     } catch (error) {

@@ -1,0 +1,8 @@
+{
+  "appId": "com.sushilpokharel.terms",
+  "appName": "Sushil Pokharel",
+  "webDir": "dist",
+  "android": {
+    "backgroundColor": "#f7f8fa"
+  }
+}

@@ -19,6 +19,7 @@ request flow, and a Terms & Conditions page.
 
 - React 18
 - Vite 6
+- Capacitor 8 for Android
 - CSS
 - Supabase Auth
 
@@ -52,6 +53,42 @@ GitHub Pages hosting. The fallback serves the app shell for routes such as
 `/terms`, which the client-side router then renders. `app.html` is the Vite
 source template; the root `index.html` and `404.html` are generated deployment
 output.
+
+## Android
+
+The project can also be packaged as an Android app with Capacitor. The Android
+app keeps the same responsive pages and opens external links in the device
+browser. The package ID is `com.sushilpokharel.terms`; choose the final ID
+before creating a Play Console listing because it cannot be changed for that
+listing later.
+
+Install Android Studio with JDK 21 and Android SDK platform 36, then build and
+sync the website into the native project:
+
+```bash
+npm ci
+npm run android:sync
+```
+
+Open the generated `android/` project in Android Studio to run it on an emulator
+or connected device. On Windows, a debug APK can also be built with:
+
+```powershell
+cd android
+.\gradlew.bat assembleDebug
+```
+
+The APK is written to
+`android/app/build/outputs/apk/debug/app-debug.apk`. The
+`.github/workflows/android-apk.yml` workflow builds this debug APK on pushes to
+`main` and uploads it as a downloadable Actions artifact.
+
+Google Play requires a signed Android App Bundle, not a debug APK. Before
+publishing, create and safely back up an upload key, build a signed release
+bundle, provide a public privacy-policy URL, complete the Play Console Data
+safety and content declarations, and prepare the store listing and screenshots.
+Never commit the signing key or its passwords. Review Play's app-quality and
+minimum-functionality requirements for web-content apps before submitting.
 
 ## GitHub Pages MCP diagnostics
 
