@@ -54,6 +54,12 @@ GitHub Pages hosting. The fallback serves the app shell for routes such as
 source template; the root `index.html` and `404.html` are generated deployment
 output.
 
+The website header includes an Android app download button. Each Pages
+deployment builds and publishes a fresh APK at
+`https://sushilpokharel00.github.io/Sushil-Pokharel/downloads/Sushil-Pokharel.apk`.
+The Pages workflow uploads both the website and APK together, so the download
+stays aligned with each deployment.
+
 ## Android
 
 The project can also be packaged as an Android app with Capacitor. The Android

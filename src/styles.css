@@ -602,6 +602,27 @@ a:focus-visible {
   letter-spacing: -0.5px;
 }
 
+.app-download-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid #426b5e;
+  border-radius: 9px;
+  background: #426b5e;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.app-download-link:hover {
+  border-color: #315648;
+  background: #315648;
+}
+
 .header-nav {
   display: flex;
   gap: 28px;
@@ -2129,6 +2150,12 @@ p {
     width: 100%;
     justify-content: space-between;
     gap: 7px;
+    font-size: 11px;
+  }
+
+  .app-download-link {
+    min-height: 36px;
+    padding: 0 11px;
     font-size: 11px;
   }
 

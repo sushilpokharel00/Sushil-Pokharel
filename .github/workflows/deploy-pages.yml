@@ -27,8 +27,25 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
       - name: Install dependencies
         run: npm ci
+      - name: Build Android app download
+        run: |
+          npm run android:sync
+          cd android
+          bash gradlew assembleDebug
+          cd ..
+          mkdir -p "$RUNNER_TEMP/android-download"
+          cp android/app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/android-download/Sushil-Pokharel.apk"
       - name: Build website
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://afbyphuozsdsajzngndq.supabase.co' }}
@@ -37,6 +54,8 @@ jobs:
           npm run build
           cp dist/app.html dist/index.html
           cp dist/index.html dist/404.html
+          mkdir -p dist/downloads
+          cp "$RUNNER_TEMP/android-download/Sushil-Pokharel.apk" dist/downloads/Sushil-Pokharel.apk
           git rm -r --ignore-unmatch assets
           mkdir -p assets
           cp -R dist/assets/. assets/

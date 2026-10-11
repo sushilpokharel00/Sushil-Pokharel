@@ -23,9 +23,15 @@ export function configureNativeApp() {
   document.addEventListener('click', (event) => {
     if (!(event.target instanceof Element)) return;
     const link = event.target.closest('a[href]');
-    if (!link || link.hasAttribute('download')) return;
+    if (!link) return;
 
     const url = new URL(link.href);
+    if (link.hasAttribute('download')) {
+      event.preventDefault();
+      void openExternalUrl(url.href);
+      return;
+    }
+
     if (
       !['http:', 'https:'].includes(url.protocol)
       || url.origin === window.location.origin
