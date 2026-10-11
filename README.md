@@ -57,10 +57,13 @@ output.
 ## Android
 
 The project can also be packaged as an Android app with Capacitor. The Android
-app keeps the same responsive pages and opens external links in the device
-browser. The package ID is `com.sushilpokharel.terms`; choose the final ID
-before creating a Play Console listing because it cannot be changed for that
-listing later.
+app loads the live GitHub Pages website, so published web changes appear in the
+app the next time it opens or reloads; web changes do not require publishing a
+new APK. The app requires an internet connection and opens external links in
+the device browser. The APK build workflow still produces a new APK when the
+native Android shell or configuration changes. The package ID is
+`com.sushilpokharel.terms`; choose the final ID before creating a Play Console
+listing because it cannot be changed for that listing later.
 
 Install Android Studio with JDK 21 and Android SDK platform 36, then build and
 sync the website into the native project:
@@ -69,6 +72,9 @@ sync the website into the native project:
 npm ci
 npm run android:sync
 ```
+
+The live website URL is configured in `capacitor.config.json`. Update it there
+if the deployed site address changes.
 
 Open the generated `android/` project in Android Studio to run it on an emulator
 or connected device. On Windows, a debug APK can also be built with:

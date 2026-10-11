@@ -4,5 +4,11 @@
   "webDir": "dist",
   "android": {
     "backgroundColor": "#f7f8fa"
+  },
+  "server": {
+    "url": "https://sushilpokharel00.github.io/Sushil-Pokharel/",
+    "allowNavigation": [
+      "sushilpokharel00.github.io"
+    ]
   }
 }
