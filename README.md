@@ -55,10 +55,9 @@ source template; the root `index.html` and `404.html` are generated deployment
 output.
 
 The website header includes an Android app download button. Each Pages
-deployment builds and publishes a fresh APK at
-`https://sushilpokharel00.github.io/Sushil-Pokharel/downloads/Sushil-Pokharel.apk`.
-The Pages workflow uploads both the website and APK together, so the download
-stays aligned with each deployment.
+deployment builds the APK and updates the `android-download` GitHub Release,
+keeping the website button linked to the latest APK without adding binary
+files to the Pages site or Git history.
 
 ## Android
 
