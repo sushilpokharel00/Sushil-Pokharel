@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import AdminPage from './AdminPage.jsx';
 import AuthPage from './AuthPage.jsx';
 import SupportPage from './SupportPage.jsx';
+import brandImage from '../favicon.svg';
 import { openExternalUrl } from './native-app.js';
 import { sitePath } from './site-path.js';
 import { supabase } from './lib/supabase.js';
@@ -32,7 +33,10 @@ function Brand() {
   return (
     <a className="brand" href={sitePath()} aria-label="Sushil Pokharel home">
       <span className="brand-mark" aria-hidden="true">
-        <span>SP</span>
+        <img src={brandImage} alt="" />
+        <svg className="brand-wave" viewBox="0 0 64 18" focusable="false">
+          <path d="M0 8c11-7 19 8 32 1s20-7 32-1v10H0z" />
+        </svg>
       </span>
       <span>Sushil Pokharel</span>
     </a>

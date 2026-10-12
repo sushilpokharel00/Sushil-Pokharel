@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "android:sync": "npm run build -- --base=/ && node scripts/prepare-android.mjs && cap sync android",
+    "android:sync": "node scripts/generate-android-icons.mjs && npm run build -- --base=/ && node scripts/prepare-android.mjs && cap sync android",
     "preview": "vite preview",
     "mcp": "node mcp-server/index.js",
     "test": "node --test"
@@ -27,6 +27,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@capacitor/cli": "8.5.3"
+    "@capacitor/cli": "8.5.3",
+    "sharp": "0.35.5"
   }
 }

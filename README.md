@@ -59,6 +59,13 @@ deployment builds the APK and updates the `android-download` GitHub Release,
 keeping the website button linked to the latest APK without adding binary
 files to the Pages site or Git history.
 
+The browser uses both `favicon.svg` and `favicon.ico` for the shared portrait
+logo. Android launcher icons are generated from the PNG embedded in
+`favicon.svg`, with a matching wave treatment, whenever `npm run android:sync`
+runs. Website deployments run that sync before building and publishing the
+updated APK, so replacing the favicon updates the web identity and next APK
+automatically.
+
 ## Android
 
 The project can also be packaged as an Android app with Capacitor. The Android
