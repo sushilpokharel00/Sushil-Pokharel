@@ -619,27 +619,6 @@ a:focus-visible {
   opacity: 0.9;
 }
 
-.app-download-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 40px;
-  padding: 0 16px;
-  border: 1px solid #426b5e;
-  border-radius: 9px;
-  background: #426b5e;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-  transition: background 150ms ease, border-color 150ms ease;
-}
-
-.app-download-link:hover {
-  border-color: #315648;
-  background: #315648;
-}
-
 .header-nav {
   display: flex;
   gap: 28px;

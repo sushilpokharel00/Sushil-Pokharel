@@ -58,14 +58,6 @@ function Header() {
     <header className="site-header">
       <div className="header-inner">
         <Brand />
-        <a
-          className="app-download-link"
-          href="https://github.com/sushilpokharel00/Sushil-Pokharel/releases/download/android-download/Sushil-Pokharel.apk"
-          download="Sushil-Pokharel.apk"
-          aria-label="Download the Sushil Pokharel Android app APK"
-        >
-          Android app
-        </a>
         <nav className="header-nav" aria-label="Main navigation">
           <a href={sitePath('/terms')} aria-current={pathname === '/terms' ? 'page' : undefined}>Terms</a>
           <a
