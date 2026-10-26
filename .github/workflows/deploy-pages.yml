@@ -54,13 +54,14 @@ jobs:
           npm run build
           cp dist/app.html dist/index.html
           cp dist/index.html dist/404.html
+          if [ -f CNAME ]; then cp CNAME dist/CNAME; fi
           git rm -r --ignore-unmatch assets
           mkdir -p assets
           cp -R dist/assets/. assets/
           cp dist/index.html index.html
           cp dist/404.html 404.html
           git add index.html assets
-          git add 404.html favicon.ico favicon.svg
+          git add 404.html favicon.ico favicon.svg CNAME
           if ! git diff --cached --quiet; then
             git -c user.name="github-actions[bot]" \
               -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \

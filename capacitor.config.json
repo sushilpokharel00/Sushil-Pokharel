@@ -6,9 +6,11 @@
     "backgroundColor": "#f7f8fa"
   },
   "server": {
-    "url": "https://sushilpokharel00.github.io/Sushil-Pokharel/",
+    "url": "https://www.sushilpokharel00.com.np/",
     "allowNavigation": [
-      "sushilpokharel00.github.io"
+      "www.sushilpokharel00.com.np",
+      "sushilpokharel00.com.np",
+      "*.sushilpokharel00.com.np"
     ]
   }
 }

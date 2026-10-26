@@ -3,7 +3,7 @@ import AdminPage from './AdminPage.jsx';
 import AuthPage from './AuthPage.jsx';
 import SupportPage from './SupportPage.jsx';
 import brandImage from '../favicon.svg';
-import { openExternalUrl } from './native-app.js';
+import { isNativeApp, openExternalUrl } from './native-app.js';
 import { sitePath } from './site-path.js';
 import { supabase } from './lib/supabase.js';
 
@@ -51,8 +51,9 @@ function ArrowIcon() {
   );
 }
 
-function Header() {
-  const pathname = getPagePathname();
+function Header({ currentPath }) {
+  const pathname = currentPath || getPagePathname();
+  const isNative = isNativeApp();
 
   return (
     <header className="site-header">
@@ -70,6 +71,16 @@ function Header() {
             Sign in
           </a>
           <a href={sitePath('/support')} aria-current={pathname === '/support' ? 'page' : undefined}>Support</a>
+          {!isNative && (
+            <a
+              className="app-download-link"
+              href="https://github.com/sushilpokharel00/Sushil-Pokharel/releases/download/android-download/Sushil-Pokharel.apk"
+              download="Sushil-Pokharel.apk"
+              aria-label="Download the Sushil Pokharel Android app APK"
+            >
+              Android APK
+            </a>
+          )}
         </nav>
       </div>
     </header>
@@ -1014,42 +1025,76 @@ function NotFoundPage() {
 }
 
 export default function App() {
-  const pathname = getPagePathname();
+  const [pathname, setPathname] = useState(() => getPagePathname());
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
+
+  useEffect(() => {
+    const onLocationChange = () => {
+      setPathname(getPagePathname());
+      window.scrollTo(0, 0);
+    };
+
+    const onOnline = () => setIsOnline(true);
+    const onOffline = () => setIsOnline(false);
+
+    window.addEventListener('popstate', onLocationChange);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+
+    return () => {
+      window.removeEventListener('popstate', onLocationChange);
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, []);
+
+  let pageContent;
   if (pathname === '/admin') {
-    return (
+    pageContent = (
       <>
-        <Header />
+        <Header currentPath={pathname} />
         <AdminPage />
         <Footer />
       </>
     );
-  }
-  if (pathname === '/account' || pathname === '/login') {
-    return (
+  } else if (pathname === '/account' || pathname === '/login') {
+    pageContent = (
       <>
-        <Header />
+        <Header currentPath={pathname} />
         <AuthPage isAccountPage={pathname === '/account'} />
         <Footer />
       </>
     );
-  }
-  if (pathname === '/support') {
-    return (
+  } else if (pathname === '/support') {
+    pageContent = (
       <>
-        <Header />
+        <Header currentPath={pathname} />
         <SupportPage />
         <Footer />
       </>
     );
-  }
-  if (pathname === '/beta') return <BetaRequestPage />;
-  if (pathname === '/beta-requested') {
-    return new URLSearchParams(window.location.search).has('submitted')
+  } else if (pathname === '/beta') {
+    pageContent = <BetaRequestPage />;
+  } else if (pathname === '/beta-requested') {
+    pageContent = new URLSearchParams(window.location.search).has('submitted')
       ? <BetaRequestConfirmationPage />
       : <BetaRequestPage />;
+  } else if (pathname !== '/' && pathname !== '/terms') {
+    pageContent = <NotFoundPage />;
+  } else if (pathname === '/') {
+    pageContent = <MaintenancePage />;
+  } else {
+    pageContent = <TermsPage />;
   }
-  const isNotFound = pathname !== '/' && pathname !== '/terms';
-  if (isNotFound) return <NotFoundPage />;
-  if (pathname === '/') return <MaintenancePage />;
-  return <TermsPage />;
+
+  return (
+    <>
+      {!isOnline && (
+        <div className="offline-banner" role="status">
+          <span>⚡ Offline mode — displaying saved content</span>
+        </div>
+      )}
+      {pageContent}
+    </>
+  );
 }

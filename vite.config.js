@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
-  base: '/Sushil-Pokharel/',
+  base: '/',
   build: {
     rollupOptions: {
       input: {

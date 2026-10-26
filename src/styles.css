@@ -15,6 +15,8 @@
   --line: #e7eaee;
   --accent: #426b5e;
   --accent-dark: #315648;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 * {
@@ -562,10 +564,31 @@ a:focus-visible {
   stroke-width: 1.6;
 }
 
+.offline-banner {
+  background: #244035;
+  color: #eaf1ed;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  padding: 8px 16px;
+  padding-top: calc(8px + var(--safe-top));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
 .site-header {
-  height: 76px;
-  background: rgba(255, 255, 255, 0.92);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  min-height: 76px;
+  padding-top: var(--safe-top);
+  background: rgba(255, 255, 255, 0.94);
   border-bottom: 1px solid #edf0f2;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .header-inner,
@@ -617,6 +640,28 @@ a:focus-visible {
   height: 10px;
   fill: #315648;
   opacity: 0.9;
+}
+
+.app-download-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 15px;
+  border: 1px solid #426b5e;
+  border-radius: 8px;
+  background: #426b5e;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.app-download-link:hover {
+  border-color: #315648;
+  background: #315648;
+  transform: translateY(-1px);
 }
 
 .header-nav {
@@ -1781,6 +1826,7 @@ p {
   min-height: 100px;
   border-top: 1px solid #e9ecef;
   background: #fff;
+  padding-bottom: var(--safe-bottom);
 }
 
 .footer-inner {

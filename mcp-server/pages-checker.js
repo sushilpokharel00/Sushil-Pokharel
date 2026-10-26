@@ -11,7 +11,7 @@ function parseSiteUrl(siteUrl) {
 
   if (
     url.protocol !== 'https:' ||
-    !url.hostname.endsWith(githubPagesDomain) ||
+    (!url.hostname.endsWith(githubPagesDomain) && !url.hostname.endsWith('sushilpokharel00.com.np')) ||
     url.username ||
     url.password ||
     url.search ||
