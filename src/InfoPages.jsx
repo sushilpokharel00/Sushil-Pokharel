@@ -117,29 +117,31 @@ export function PrivacyPage({ Header, Footer }) {
       </PolicySection>
       <PolicySection title="Privacy-preserving site analytics">
         <p>
-          If configured, the site records daily visits by page using a keyed
-          hash derived from the request IP address. The raw address is not
-          stored in the analytics table. The records help estimate traffic and
-          are not a live-session tracker or an audited uptime service.
+          If you allow analytics in Cookie settings, the site records daily
+          visits by page using a keyed hash derived from the request IP address.
+          The raw address is not stored in the analytics table. The records
+          help estimate traffic and are not a live-session tracker or an audited
+          uptime service.
         </p>
       </PolicySection>
       <PolicySection title="Advertising, cookies, and similar technologies">
         <p>
-          This website loads Google AdSense. Google and its advertising
-          partners may use cookies, local storage, web beacons, or similar
-          technologies to provide, measure, and personalize ads, subject to
-          your location, consent choices, and Google’s settings. Advertising
-          partners may receive information such as your browser, device, and
-          visits to this site.
+          Google AdSense is loaded only if you allow advertising technologies
+          in Cookie settings. If enabled, Google and its advertising partners
+          may use cookies, local storage, web beacons, or similar technologies
+          to provide, measure, and personalize ads, subject to your location,
+          consent choices, and Google’s settings. Advertising partners may
+          receive information such as your browser, device, and visits to this
+          site.
         </p>
         <p>
-          You can manage ad personalization in{' '}
+          You can review or change your choices at any time using Cookie
+          settings in the footer. You can also manage ad personalization in{' '}
           <a href="https://adssettings.google.com/" target="_blank" rel="noreferrer">
             Google Ads Settings
           </a>
-          . You can also manage cookies in your browser. Blocking them may
-          affect some site or advertising features. Where applicable, Google’s
-          consent choices or messaging may be presented for advertising
+          . Browser controls can also remove stored cookies. Where applicable,
+          Google’s consent choices or messaging may be presented for advertising
           technologies.
         </p>
         <p>
@@ -436,7 +438,7 @@ export function AndroidAppPage({ Header, Footer }) {
   );
 }
 
-function NewsletterSignup() {
+export function NewsletterSignup() {
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -680,32 +682,8 @@ export function HomeContent() {
           {settingsWarning && <p className="maintenance-settings-warning" role="status">{settingsWarning}</p>}
           <div className="home-quick-links">
             <a className="app-download-link" href={sitePath('/app')}>Explore the Android app</a>
-            <a className="home-secondary-link" href={sitePath('/contact')}>Contact me</a>
+            <a className="home-secondary-link" href={sitePath('/status')}>View live status</a>
           </div>
-        </div>
-        <NewsletterSignup />
-        <div className="home-topic-grid">
-          <article>
-            <h2>Website policies</h2>
-            <p>Find practical information about site use, privacy, and third-party advertising.</p>
-            <a href={sitePath('/terms')}>Read the Terms &amp; Conditions</a>
-            <a href={sitePath('/privacy')}>Read the Privacy Policy</a>
-            <a href={sitePath('/disclaimer')}>Read the Disclaimer</a>
-          </article>
-          <article>
-            <h2>Accounts and support</h2>
-            <p>Manage your sign-in, use two-factor security, or send a private support request.</p>
-            <a href={sitePath('/account/security')}>Manage your account</a>
-            <a href={sitePath('/posts')}>Read community posts</a>
-            <a href={sitePath('/support')}>Open the support inbox</a>
-          </article>
-          <article>
-            <h2>App and beta access</h2>
-            <p>Read about the Android app or send an email to request beta access.</p>
-            <a href={sitePath('/app')}>Android app information</a>
-            <a href={sitePath('/beta')}>Request beta access</a>
-            <a href={sitePath('/status')}>Website status and updates</a>
-          </article>
         </div>
       </section>
     </main>

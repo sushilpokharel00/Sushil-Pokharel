@@ -1,8 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
+import {
+  getAuthRedirectUrl,
+  getDashboardPath,
+  getUsernameError,
+  isPasswordRecoveryUrl,
+  normalizeUsername,
+} from './lib/auth-routing.js';
 import { supabase, supabaseConfigurationError } from './lib/supabase.js';
-import { getDashboardPath, getUsernameError, normalizeUsername } from './lib/auth-routing.js';
 import { getPasswordPolicyError } from './lib/password-policy.js';
 import { sitePath } from './site-path.js';
+
+const authRedirectOrigin = import.meta.env.VITE_AUTH_REDIRECT_URL?.trim()
+  || 'https://sushilpokharel00.com.np';
 
 function setPageMetadata(title, description) {
   document.title = title;
@@ -30,7 +39,9 @@ function AuthField({ id, label, type = 'text', autoComplete, minLength, maxLengt
 
 export default function AuthPage({ isAccountPage = false, isAdminPage = false }) {
   const [session, setSession] = useState(null);
-  const [screen, setScreen] = useState('loading');
+  const [screen, setScreen] = useState(() => (
+    isPasswordRecoveryUrl(window.location) ? 'new-password' : 'loading'
+  ));
   const [notice, setNotice] = useState(null);
   const [busy, setBusy] = useState(false);
   const [factorId, setFactorId] = useState('');
@@ -46,7 +57,7 @@ export default function AuthPage({ isAccountPage = false, isAdminPage = false })
   const [newPassword, setNewPassword] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const recoveryFlowRef = useRef(false);
+  const recoveryFlowRef = useRef(isPasswordRecoveryUrl(window.location));
 
   useEffect(() => {
     const titles = {
@@ -82,6 +93,8 @@ export default function AuthPage({ isAccountPage = false, isAdminPage = false })
         setScreen('new-password');
         setNotice({ kind: 'info', text: 'Choose a new password for your account.' });
       } else if (event === 'SIGNED_OUT') {
+        recoveryFlowRef.current = false;
+        window.__passwordRecoveryRedirect = false;
         setScreen('sign-in');
         setVerifiedFactor(null);
       }
@@ -97,6 +110,12 @@ export default function AuthPage({ isAccountPage = false, isAdminPage = false })
 
       setSession(data.session);
       if (!data.session) {
+        if (recoveryFlowRef.current) {
+          recoveryFlowRef.current = false;
+          window.__passwordRecoveryRedirect = false;
+          window.history.replaceState(null, '', sitePath('/account'));
+          setNotice({ kind: 'error', text: 'This password reset link is invalid or expired. Request a new one to continue.' });
+        }
         setScreen('sign-in');
         return;
       }
@@ -225,7 +244,7 @@ export default function AuthPage({ isAccountPage = false, isAdminPage = false })
         password,
         options: {
           data: { full_name: fullName.trim(), username: normalizeUsername(username) },
-          emailRedirectTo: new URL(sitePath('/account'), window.location.origin).toString(),
+          emailRedirectTo: getAuthRedirectUrl(sitePath('/account'), authRedirectOrigin),
         },
       }),
       async ({ data }) => {
@@ -248,7 +267,7 @@ export default function AuthPage({ isAccountPage = false, isAdminPage = false })
     event.preventDefault();
     await runAction(
       () => supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: new URL(sitePath('/account'), window.location.origin).toString(),
+        redirectTo: getAuthRedirectUrl(sitePath('/account'), authRedirectOrigin),
       }),
       () => setNotice({ kind: 'success', text: 'If an account exists for that email, a password reset link is on its way.' }),
     );
@@ -266,6 +285,8 @@ export default function AuthPage({ isAccountPage = false, isAdminPage = false })
       async () => {
         setNewPassword('');
         recoveryFlowRef.current = false;
+        window.__passwordRecoveryRedirect = false;
+        window.history.replaceState(null, '', sitePath('/account'));
         setNotice({ kind: 'success', text: 'Your password has been updated.' });
         await continueWithSession();
       },

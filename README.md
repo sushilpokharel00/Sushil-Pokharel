@@ -2,8 +2,9 @@
 
 A responsive personal website with original home-page content, site policies,
 contact and support options, an Android app information page, and account and
-beta-access features. The home page is a maintenance/coming-soon landing page
-with a double-opt-in newsletter form and no countdown timer.
+beta-access features. Secondary destinations and the double-opt-in newsletter
+are organized in the site footer; the home page focuses on the current site
+message and a small set of primary actions.
 
 ## Features
 
@@ -11,8 +12,11 @@ with a double-opt-in newsletter form and no countdown timer.
 - Home, Terms & Conditions, Privacy Policy, Disclaimer, Contact, Support, and
   Android app pages, plus published community posts at `/posts`
 - Dedicated beta request, confirmation, account, and not-found pages
+- Public `/status` dashboard with live service checks, consent-based traffic
+  aggregates, response time, and an explicit uptime-monitoring status
 - Beta participation terms with required applicant acknowledgement
 - Accessible navigation, forms, and status messages
+- Cookie preferences with optional analytics and advertising disabled until opt-in
 - Email drafts prepared for review before sending
 - Account-protected support requests with an admin inbox and MCP-managed replies
 - Admin-controlled support availability indicator
@@ -22,6 +26,8 @@ with a double-opt-in newsletter form and no countdown timer.
 - MFA-protected admin dashboard for maintenance settings, support, accounts,
   home-page metadata, post moderation, announcements, newsletter campaigns, and
   traffic summaries
+- Responsive footer navigation for contact, policies, account, support, beta
+  access, app information, and newsletter signup
 - Double-opt-in newsletter subscriptions and Resend delivery through Supabase
   Edge Functions
 
@@ -43,7 +49,9 @@ npm ci
 npm run dev
 ```
 
-Open the local URL printed by Vite (usually `http://localhost:5173`).
+Open `http://localhost:3000` after Vite starts.
+If PowerShell blocks `npm.ps1` because of its execution policy, use
+`npm.cmd ci` and `npm.cmd run dev` instead.
 
 ## Production
 
@@ -61,18 +69,20 @@ Pushing to `main` builds and deploys the site at `https://sushilpokharel00.com.n
 `.github/workflows/deploy-pages.yml`. The workflow also publishes the built
 HTML, fallback `404.html`, and assets to the repository root for branch-based
 GitHub Pages hosting. The fallback serves the app shell for routes such as
-`/terms`, `/privacy`, `/disclaimer`, `/contact`, `/app`, `/account/security`,
-`/admin/login`, `/user`, and `/posts`, which the client-side router then
+`/terms`, `/privacy`, `/disclaimer`, `/contact`, `/app`, `/status`, `/beta`,
+`/account/security`, `/admin/login`, `/user`, and `/posts`, which the client-side router then
 renders. `app.html` is the Vite source template; the
 root `index.html` and `404.html` are generated deployment output.
 
-The Google AdSense account tag and loader are included in the shared HTML
-template, so they load once across the site's pages. The root `ads.txt` entry
-is copied into the published site. Ad placement and consent messaging should
-be configured in the AdSense account; the site does not include placeholder ad
-units. The AdSense loader and publisher ID remain reviewed source-code
-configuration rather than editable admin text; arbitrary script injection is
-not allowed. The custom domain is configured through `CNAME`, DNS, and GitHub
+The Google AdSense account tag is included in the shared HTML template. Its
+loader is requested only after a visitor allows advertising technologies in
+Cookie settings; optional analytics is likewise off until allowed. Visitors
+can review or change choices from the banner or the persistent Cookie settings
+control. The root `ads.txt` entry is copied into the published site. Ad
+placement and Google consent messaging should still be configured in the
+AdSense account; the site does not include placeholder ad units. The AdSense
+publisher ID remains reviewed source-code configuration rather than editable
+admin text; arbitrary script injection is not allowed. The custom domain is configured through `CNAME`, DNS, and GitHub
 Pages settings, not changed by a runtime dashboard.
 
 Each Pages deployment builds the Android APK, publishes it at
@@ -137,7 +147,8 @@ MCP server is a trusted local management interface, not a hosted database.
 The route checker tests the site root, Terms, beta, account and admin URLs, plus
 a probe path that should render the app's not-found page. It only requests
 HTTPS GitHub Pages sites or the official `sushilpokharel00.com.np` domain.
-The public website status and beta-request form are available at `/status`.
+The live website status dashboard is available at `/status`; beta requests use
+the dedicated `/beta` route.
 
 Copy `.env.example` to `.env` and fill in the public Supabase project URL and
 anon/publishable key. Set `SUPABASE_SERVICE_ROLE_KEY` to the local-only
@@ -210,12 +221,33 @@ https://sushilpokharel00.com.np/account
 https://www.sushilpokharel00.com.np/account
 https://sushilpokharel00.com.np/account/security
 https://www.sushilpokharel00.com.np/account/security
+http://localhost:3000/account
 ```
+
+Set the Supabase Auth Site URL to `https://sushilpokharel00.com.np` so recovery
+emails do not point at a stopped local server. The app sends sign-up and
+password-recovery links to that production origin by default. To test recovery
+locally, set `VITE_AUTH_REDIRECT_URL=http://localhost:3000` in `.env` and keep
+the local server running until you finish the email flow; add that exact account
+URL to Supabase's allowed redirect URLs. Recovery links sent to the app root
+are routed to the password form automatically.
 
 For local website development, put the public project values in `.env` as
 shown in `.env.example`. The MCP service-role key is read only by the Node MCP
 process; Vite does not expose it to the browser because it is not prefixed
 with `VITE_`.
+
+The Supabase Edge Functions also allow the local development origin on port
+3000. To use the local app with those hosted functions, deploy the updated
+function sources:
+
+```bash
+supabase functions deploy sign-in-with-username
+supabase functions deploy admin-platform
+supabase functions deploy record-page-view
+supabase functions deploy delete-account
+supabase functions deploy newsletter
+```
 
 Users can permanently delete their own account from `/account/security` after entering
 `DELETE` to confirm. This calls the `delete-account` Supabase Edge Function,
@@ -255,8 +287,13 @@ by `20261101010920_username_authentication.sql` for unique usernames and
 username-based authentication.
 Do not expose database service-role credentials to the browser.
 
-The `/` route reads its maintenance heading and message from `site_settings`;
-the `/status` route retains the detailed status and beta-request experience.
+The `/` route reads its maintenance heading and message from `site_settings`.
+The `/status` route checks that public configuration, reports its live response
+time, and reads aggregate analytics through the `public-status` Edge Function.
+Traffic data includes only visitors who opted in to analytics and is counted
+per visitor, page, and UTC day. Active-user tracking is not enabled. Since no
+independent uptime monitor is configured, the page reports uptime history as
+unavailable rather than estimating a percentage.
 `/user` and `/dashboard` require a signed-in non-admin user. `/admin` is
 restricted to administrators with a verified TOTP MFA session. Neither
 dashboard is linked as a public page, and the router checks the session and
@@ -332,16 +369,19 @@ Deploy the functions after applying the platform migration:
 supabase functions deploy newsletter
 supabase functions deploy admin-platform
 supabase functions deploy record-page-view
+supabase functions deploy public-status
 ```
 
 `newsletter` stores confirmation-token hashes and sends confirmation links
 that expire after 24 hours. Admin campaigns contain unsubscribe links.
 `record-page-view` stores a daily keyed hash and page path, not the raw visitor
 IP; the dashboard's visitor and recent-sign-in counts are estimates, not
-audited analytics. No uptime-monitoring provider is connected, so the admin
-dashboard explicitly reports uptime as unconfigured. Configure a dedicated
-monitoring service if uptime history or alerting is required. Review the
-Privacy Policy before enabling analytics and advertising in production.
+audited analytics. `public-status` exposes only aggregate counts from the
+consent-based page-view records; it does not expose visitor hashes or page-level
+records. No uptime-monitoring provider is connected, so the public status page
+reports uptime as unconfigured. Configure a dedicated monitoring service if
+uptime history or alerting is required. Review the Privacy Policy before
+enabling analytics and advertising in production.
 
 ### Local environment and secrets
 
@@ -378,6 +418,7 @@ src/
   AuthPage.jsx  Account, sign-in, signup, MFA, and password flows
   UserDashboard.jsx Profile, post, announcement, and preference management
   InfoPages.jsx Public legal, app, newsletter, posts, and landing pages
+  StatusPage.jsx Live health checks, consent-based traffic, and uptime status
   SupportPage.jsx Signed-in support requests and replies
   App.jsx       Page content and interactions
   lib/
@@ -398,7 +439,7 @@ mcp-server/
   pages-checker.js  GitHub Pages route diagnostics
   pages-checker.test.js
 supabase/
-  functions/       Authenticated account, newsletter, and analytics endpoints
+  functions/       Account, newsletter, status, and analytics endpoints
   migrations/      Status, support, and user-platform schema/RLS
 app.html        Vite HTML source template
 vite.config.js  Vite configuration for the GitHub Pages project path

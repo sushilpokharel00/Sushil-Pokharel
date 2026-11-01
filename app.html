@@ -10,14 +10,18 @@
     <meta name="theme-color" content="#f7f8fa" />
     <meta name="google-adsense-account" content="ca-pub-9524843236354830">
     <link rel="canonical" href="https://sushilpokharel00.com.np/" />
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9524843236354830"
-     crossorigin="anonymous"></script>
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="icon" type="image/x-icon" href="./favicon.ico" sizes="any" />
     <title>Terms &amp; Conditions | Sushil Pokharel</title>
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      if (new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery') {
+        window.__passwordRecoveryRedirect = true;
+        window.history.replaceState(null, '', `/account${window.location.hash}`);
+      }
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

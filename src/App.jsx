@@ -1,19 +1,28 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
 import AuthPage from './AuthPage.jsx';
+import CookieConsent, { OPEN_COOKIE_SETTINGS_EVENT } from './CookieConsent.jsx';
 import {
   AndroidAppPage,
   ContactPage,
   DisclaimerPage,
   HomeContent,
   NewsletterActionPage,
+  NewsletterSignup,
   PrivacyPage,
   PublicPostsPage,
 } from './InfoPages.jsx';
 import SupportPage from './SupportPage.jsx';
+import StatusPage from './StatusPage.jsx';
 import brandImage from '../favicon.svg';
 import { isNativeApp, openExternalUrl } from './native-app.js';
 import { sitePath } from './site-path.js';
 import { supabase } from './lib/supabase.js';
+import { isPasswordRecoveryUrl } from './lib/auth-routing.js';
+import {
+  COOKIE_PREFERENCES_KEY,
+  parseCookiePreferences,
+  serializeCookiePreferences,
+} from './lib/cookie-preferences.js';
 
 const AdminPage = lazy(() => import('./AdminPage.jsx'));
 const UserDashboard = lazy(() => import('./UserDashboard.jsx'));
@@ -76,22 +85,15 @@ function Header({ currentPath }) {
         <Brand />
         <nav className="header-nav" aria-label="Main navigation">
           <a href={sitePath('/')} aria-current={pathname === '/' ? 'page' : undefined}>Home</a>
-          <a href={sitePath('/terms')} aria-current={pathname === '/terms' ? 'page' : undefined}>Terms</a>
-          <a href={sitePath('/privacy')} aria-current={pathname === '/privacy' ? 'page' : undefined}>Privacy</a>
-          <a href={sitePath('/disclaimer')} aria-current={pathname === '/disclaimer' ? 'page' : undefined}>Disclaimer</a>
-          <a href={sitePath('/contact')} aria-current={pathname === '/contact' ? 'page' : undefined}>Contact</a>
+          <a href={sitePath('/status')} aria-current={pathname === '/status' ? 'page' : undefined}>Status</a>
           <a href={sitePath('/account')} aria-current={pathname === '/account' || pathname === '/login' || pathname === '/account/security' ? 'page' : undefined}>
             Sign in
           </a>
-          <a href={sitePath('/admin/login')} aria-current={pathname === '/admin/login' ? 'page' : undefined}>Admin sign-in</a>
-          <a href={sitePath('/support')} aria-current={pathname === '/support' ? 'page' : undefined}>Support</a>
           <a
             className={isNative ? undefined : 'app-download-link'}
             href={sitePath('/app')}
             aria-current={pathname === '/app' || pathname === '/android' ? 'page' : undefined}
-          >
-            Android app
-          </a>
+          >Android app</a>
         </nav>
       </div>
     </header>
@@ -99,6 +101,8 @@ function Header({ currentPath }) {
 }
 
 function getPagePathname() {
+  if (isPasswordRecoveryUrl(window.location)) return '/account';
+
   const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
   const basePath = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
@@ -110,17 +114,43 @@ function getPagePathname() {
 function Footer() {
   return (
     <footer className="site-footer">
-      <div className="footer-inner">
-        <Brand />
-        <nav className="footer-links" aria-label="Footer navigation">
-          <a href={sitePath('/terms')}>Terms</a>
-          <a href={sitePath('/privacy')}>Privacy</a>
-          <a href={sitePath('/disclaimer')}>Disclaimer</a>
-          <a href={sitePath('/contact')}>Contact</a>
-          <a href={sitePath('/support')}>Support</a>
-          <a href={sitePath('/app')}>Android app</a>
-        </nav>
-        <span>Lokanthali, Bhaktapur, Nepal · © {new Date().getFullYear()} Sushil Pokharel</span>
+      <div className="footer-container">
+        <NewsletterSignup />
+        <div className="footer-grid">
+          <div className="footer-about">
+            <Brand />
+            <p>Personal website, project updates, and support from Bhaktapur, Nepal.</p>
+          </div>
+          <nav className="footer-column" aria-label="Explore">
+            <h2>Explore</h2>
+            <a href={sitePath('/app')}>Android app</a>
+            <a href={sitePath('/posts')}>Community posts</a>
+            <a href={sitePath('/status')}>Website status</a>
+          </nav>
+          <nav className="footer-column" aria-label="Account and support">
+            <h2>Account &amp; support</h2>
+            <a href={sitePath('/account')}>Account</a>
+            <a href={sitePath('/support')}>Support inbox</a>
+            <a href={sitePath('/contact')}>Get in touch</a>
+            <a href={sitePath('/beta')}>Beta access</a>
+          </nav>
+          <nav className="footer-column" aria-label="Website policies">
+            <h2>Website policies</h2>
+            <a href={sitePath('/terms')}>Terms &amp; Conditions</a>
+            <a href={sitePath('/privacy')}>Privacy Policy</a>
+            <a href={sitePath('/disclaimer')}>Disclaimer</a>
+          </nav>
+        </div>
+        <div className="footer-bottom">
+          <span>Lokanthali, Bhaktapur, Nepal · © {new Date().getFullYear()} Sushil Pokharel</span>
+          <button
+            className="footer-cookie-settings"
+            type="button"
+            onClick={() => window.dispatchEvent(new Event(OPEN_COOKIE_SETTINGS_EVENT))}
+          >
+            Cookie settings
+          </button>
+        </div>
       </div>
     </footer>
   );
@@ -1150,6 +1180,41 @@ function DashboardGate({ isAdmin, children }) {
 export default function App() {
   const [pathname, setPathname] = useState(() => getPagePathname());
   const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
+  const [cookieConsent, setCookieConsent] = useState(() => {
+    try {
+      return {
+        preferences: parseCookiePreferences(window.localStorage.getItem(COOKIE_PREFERENCES_KEY)),
+        error: '',
+      };
+    } catch (error) {
+      console.error('Could not read the saved cookie preferences.', error);
+      return {
+        preferences: null,
+        error: 'Browser storage is unavailable. Your optional choices will remain off.',
+      };
+    }
+  });
+
+  function saveCookiePreferences(preferences) {
+    const savedPreferences = {
+      essential: true,
+      analytics: preferences.analytics === true,
+      advertising: preferences.advertising === true,
+    };
+    try {
+      window.localStorage.setItem(COOKIE_PREFERENCES_KEY, serializeCookiePreferences(savedPreferences));
+    } catch (error) {
+      console.error('Could not save the cookie preferences.', error);
+      setCookieConsent((current) => ({
+        ...current,
+        error: 'Your choice could not be saved. Enable browser storage and try again.',
+      }));
+      return false;
+    }
+
+    setCookieConsent({ preferences: savedPreferences, error: '' });
+    return true;
+  }
 
   useEffect(() => {
     const onLocationChange = () => {
@@ -1172,7 +1237,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!supabase || pathname.startsWith('/admin')) return;
+    if (!supabase || cookieConsent.preferences?.analytics !== true || pathname.startsWith('/admin')) return;
     supabase.functions.invoke('record-page-view', {
       body: { pagePath: pathname },
     }).then(({ error }) => {
@@ -1180,7 +1245,19 @@ export default function App() {
     }).catch((error) => {
       console.warn('Privacy-preserving page analytics are unavailable.', error);
     });
-  }, [pathname]);
+  }, [cookieConsent.preferences?.analytics, pathname]);
+
+  useEffect(() => {
+    if (cookieConsent.preferences?.advertising !== true) return undefined;
+
+    const script = document.createElement('script');
+    script.async = true;
+    script.crossOrigin = 'anonymous';
+    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9524843236354830';
+    document.head.appendChild(script);
+
+    return () => script.remove();
+  }, [cookieConsent.preferences?.advertising]);
 
   let pageContent;
   if (pathname === '/admin/login') {
@@ -1250,7 +1327,7 @@ export default function App() {
       ? <BetaRequestConfirmationPage />
       : <BetaRequestPage />;
   } else if (pathname === '/status') {
-    pageContent = <MaintenancePage />;
+    pageContent = <StatusPage Header={Header} Footer={Footer} />;
   } else if (pathname !== '/' && pathname !== '/terms') {
     pageContent = <NotFoundPage />;
   } else if (pathname === '/') {
@@ -1273,6 +1350,11 @@ export default function App() {
         </div>
       )}
       {pageContent}
+      <CookieConsent
+        preferences={cookieConsent.preferences}
+        onSave={saveCookiePreferences}
+        error={cookieConsent.error}
+      />
     </>
   );
 }
