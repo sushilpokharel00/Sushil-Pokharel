@@ -1,11 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import AdminPage from './AdminPage.jsx';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import AuthPage from './AuthPage.jsx';
+import {
+  AndroidAppPage,
+  ContactPage,
+  DisclaimerPage,
+  HomeContent,
+  NewsletterActionPage,
+  PrivacyPage,
+  PublicPostsPage,
+} from './InfoPages.jsx';
 import SupportPage from './SupportPage.jsx';
 import brandImage from '../favicon.svg';
 import { isNativeApp, openExternalUrl } from './native-app.js';
 import { sitePath } from './site-path.js';
 import { supabase } from './lib/supabase.js';
+
+const AdminPage = lazy(() => import('./AdminPage.jsx'));
+const UserDashboard = lazy(() => import('./UserDashboard.jsx'));
 
 const sections = [
   { id: 'agreement', title: 'Agreement to these terms' },
@@ -27,6 +38,10 @@ const sections = [
 function setPageMetadata(title, description) {
   document.title = title;
   document.querySelector('meta[name="description"]')?.setAttribute('content', description);
+  document.querySelector('link[rel="canonical"]')?.setAttribute(
+    'href',
+    `https://sushilpokharel00.com.np${window.location.pathname}`,
+  );
 }
 
 function Brand() {
@@ -60,27 +75,23 @@ function Header({ currentPath }) {
       <div className="header-inner">
         <Brand />
         <nav className="header-nav" aria-label="Main navigation">
+          <a href={sitePath('/')} aria-current={pathname === '/' ? 'page' : undefined}>Home</a>
           <a href={sitePath('/terms')} aria-current={pathname === '/terms' ? 'page' : undefined}>Terms</a>
-          <a
-            href={sitePath('/beta')}
-            aria-current={pathname === '/beta' || pathname === '/beta-requested' ? 'page' : undefined}
-          >
-            Beta access
-          </a>
-          <a href={sitePath('/account')} aria-current={pathname === '/account' || pathname === '/login' ? 'page' : undefined}>
+          <a href={sitePath('/privacy')} aria-current={pathname === '/privacy' ? 'page' : undefined}>Privacy</a>
+          <a href={sitePath('/disclaimer')} aria-current={pathname === '/disclaimer' ? 'page' : undefined}>Disclaimer</a>
+          <a href={sitePath('/contact')} aria-current={pathname === '/contact' ? 'page' : undefined}>Contact</a>
+          <a href={sitePath('/account')} aria-current={pathname === '/account' || pathname === '/login' || pathname === '/account/security' ? 'page' : undefined}>
             Sign in
           </a>
+          <a href={sitePath('/admin/login')} aria-current={pathname === '/admin/login' ? 'page' : undefined}>Admin sign-in</a>
           <a href={sitePath('/support')} aria-current={pathname === '/support' ? 'page' : undefined}>Support</a>
-          {!isNative && (
-            <a
-              className="app-download-link"
-              href="https://github.com/sushilpokharel00/Sushil-Pokharel/releases/download/android-download/Sushil-Pokharel.apk"
-              download="Sushil-Pokharel.apk"
-              aria-label="Download the Sushil Pokharel Android app APK"
-            >
-              Android APK
-            </a>
-          )}
+          <a
+            className={isNative ? undefined : 'app-download-link'}
+            href={sitePath('/app')}
+            aria-current={pathname === '/app' || pathname === '/android' ? 'page' : undefined}
+          >
+            Android app
+          </a>
         </nav>
       </div>
     </header>
@@ -101,11 +112,25 @@ function Footer() {
     <footer className="site-footer">
       <div className="footer-inner">
         <Brand />
-        <a className="footer-email" href={sitePath('/beta')}>Beta access by request</a>
-        <a className="footer-support-link" href={sitePath('/support')}>Support</a>
+        <nav className="footer-links" aria-label="Footer navigation">
+          <a href={sitePath('/terms')}>Terms</a>
+          <a href={sitePath('/privacy')}>Privacy</a>
+          <a href={sitePath('/disclaimer')}>Disclaimer</a>
+          <a href={sitePath('/contact')}>Contact</a>
+          <a href={sitePath('/support')}>Support</a>
+          <a href={sitePath('/app')}>Android app</a>
+        </nav>
         <span>Lokanthali, Bhaktapur, Nepal · © {new Date().getFullYear()} Sushil Pokharel</span>
       </div>
     </footer>
+  );
+}
+
+function PageLoading() {
+  return (
+    <main className="auth-page">
+      <section className="auth-card" role="status">Loading your secure dashboard…</section>
+    </main>
   );
 }
 
@@ -184,7 +209,7 @@ function TermsPage() {
                   <path d="M6.5 2.75v3M13.5 2.75v3M3.5 8h13" />
                 </svg>
               </span>
-              <span>Last updated: <strong>October 10, 2026</strong></span>
+              <span>Last updated: <strong>November 1, 2026</strong></span>
               <span className="meta-divider" />
               <span>Estimated reading time: <strong>8 minutes</strong></span>
             </div>
@@ -334,6 +359,14 @@ function TermsPage() {
                   and tools. Those services are governed by their own terms and
                   privacy policies. We are not responsible for third-party
                   services that we do not control.
+                </p>
+                <p>
+                  This website uses Google AdSense to display advertising.
+                  Google and its partners may use cookies or similar
+                  technologies as described in the{' '}
+                  <a href={sitePath('/privacy')}>Privacy Policy</a>. See the{' '}
+                  <a href={sitePath('/disclaimer')}>Disclaimer</a> for
+                  information about third-party ads and links.
                 </p>
               </Section>
 
@@ -517,8 +550,8 @@ function MaintenancePage() {
 
   useEffect(() => {
     setPageMetadata(
-      'Under maintenance | Sushil Pokharel',
-      'This website is temporarily under maintenance. Request beta access or contact Sushil Pokharel.',
+      'Website status | Sushil Pokharel',
+      'Current website status, beta access information, and contact options.',
     );
   }, []);
 
@@ -632,14 +665,14 @@ function MaintenancePage() {
   return (
     <>
       <Header />
-      <main className="home-maintenance">
+      <section className="home-maintenance" aria-label="Current website status and contact options">
         <section className="maintenance-message" aria-labelledby="maintenance-title">
           <div className="status-emblem" aria-hidden="true">
             <span className="status-orbit" />
             <span className="status-core" />
           </div>
           <span className="eyebrow"><span /> {siteSettings.is_maintenance ? 'WEBSITE STATUS' : 'NOW OPEN'}</span>
-          <h1 id="maintenance-title">{siteSettings.maintenance_title}</h1>
+          <h2 className="maintenance-title" id="maintenance-title">{siteSettings.maintenance_title}</h2>
           <p className="maintenance-copy">
             {siteSettings.maintenance_message}
           </p>
@@ -756,7 +789,7 @@ function MaintenancePage() {
             </a>
           </div>
         </section>
-      </main>
+      </section>
       <Footer />
     </>
   );
@@ -1024,6 +1057,96 @@ function NotFoundPage() {
   );
 }
 
+function DashboardGate({ isAdmin, children }) {
+  const [state, setState] = useState('checking');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    let active = true;
+
+    function redirect(path) {
+      if (active) window.location.replace(sitePath(path));
+    }
+
+    async function checkAccess() {
+      if (!supabase) {
+        if (active) setState('unconfigured');
+        return;
+      }
+
+      if (active) setState('checking');
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) {
+          redirect(isAdmin ? '/admin/login' : '/account');
+          return;
+        }
+
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+        if (!user) {
+          redirect(isAdmin ? '/admin/login' : '/account');
+          return;
+        }
+
+        const hasAdminRole = user.app_metadata?.role === 'admin';
+        if (isAdmin && !hasAdminRole) {
+          redirect('/user');
+          return;
+        }
+        if (!isAdmin && hasAdminRole) {
+          redirect('/admin');
+          return;
+        }
+        if (isAdmin) {
+          const { data: assurance, error: assuranceError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+          if (assuranceError) throw assuranceError;
+          if (assurance.currentLevel !== 'aal2') {
+            redirect('/admin/login');
+            return;
+          }
+        }
+
+        if (active) setState('ready');
+      } catch (error) {
+        if (active) {
+          setErrorMessage(error.message || 'Could not verify your sign-in session.');
+          setState('error');
+        }
+      }
+    }
+
+    const { data: { subscription } } = supabase?.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        redirect(isAdmin ? '/admin/login' : '/account');
+      } else if (event === 'TOKEN_REFRESHED') {
+        queueMicrotask(checkAccess);
+      }
+    }) ?? { data: { subscription: null } };
+
+    checkAccess();
+    return () => {
+      active = false;
+      subscription?.unsubscribe();
+    };
+  }, [isAdmin]);
+
+  if (state === 'ready') return children;
+  if (state === 'error' || state === 'unconfigured') {
+    return (
+      <main className="auth-page">
+        <section className="auth-card" role={state === 'error' ? 'alert' : 'status'}>
+          <h1>{state === 'error' ? 'Could not verify access' : 'Sign-in is unavailable'}</h1>
+          <p>{state === 'error' ? errorMessage : 'Configure Supabase authentication before opening this dashboard.'}</p>
+          <a href={sitePath(isAdmin ? '/admin/login' : '/account')}>Go to sign in</a>
+        </section>
+      </main>
+    );
+  }
+  return <PageLoading />;
+}
+
 export default function App() {
   const [pathname, setPathname] = useState(() => getPagePathname());
   const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
@@ -1048,20 +1171,55 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!supabase || pathname.startsWith('/admin')) return;
+    supabase.functions.invoke('record-page-view', {
+      body: { pagePath: pathname },
+    }).then(({ error }) => {
+      if (error) console.warn('Privacy-preserving page analytics are unavailable.', error);
+    }).catch((error) => {
+      console.warn('Privacy-preserving page analytics are unavailable.', error);
+    });
+  }, [pathname]);
+
   let pageContent;
-  if (pathname === '/admin') {
+  if (pathname === '/admin/login') {
     pageContent = (
       <>
         <Header currentPath={pathname} />
-        <AdminPage />
+        <AuthPage isAdminPage />
         <Footer />
       </>
     );
-  } else if (pathname === '/account' || pathname === '/login') {
+  } else if (pathname === '/admin') {
     pageContent = (
       <>
         <Header currentPath={pathname} />
-        <AuthPage isAccountPage={pathname === '/account'} />
+        <Suspense fallback={<PageLoading />}>
+          <DashboardGate key={pathname} isAdmin>
+            <AdminPage />
+          </DashboardGate>
+        </Suspense>
+        <Footer />
+      </>
+    );
+  } else if (pathname === '/account' || pathname === '/login' || pathname === '/account/security') {
+    pageContent = (
+      <>
+        <Header currentPath={pathname} />
+        <AuthPage key={pathname} isAccountPage />
+        <Footer />
+      </>
+    );
+  } else if (pathname === '/user' || pathname === '/dashboard') {
+    pageContent = (
+      <>
+        <Header currentPath={pathname} />
+        <Suspense fallback={<PageLoading />}>
+          <DashboardGate key={pathname}>
+            <UserDashboard />
+          </DashboardGate>
+        </Suspense>
         <Footer />
       </>
     );
@@ -1073,16 +1231,36 @@ export default function App() {
         <Footer />
       </>
     );
+  } else if (pathname === '/contact') {
+    pageContent = <ContactPage Header={Header} Footer={Footer} />;
+  } else if (pathname === '/privacy' || pathname === '/privacy-policy') {
+    pageContent = <PrivacyPage Header={Header} Footer={Footer} />;
+  } else if (pathname === '/posts') {
+    pageContent = <PublicPostsPage Header={Header} Footer={Footer} />;
+  } else if (pathname === '/disclaimer') {
+    pageContent = <DisclaimerPage Header={Header} Footer={Footer} />;
+  } else if (pathname === '/android' || pathname === '/android-app' || pathname === '/app') {
+    pageContent = <AndroidAppPage Header={Header} Footer={Footer} />;
+  } else if (pathname === '/newsletter') {
+    pageContent = <NewsletterActionPage Header={Header} Footer={Footer} />;
   } else if (pathname === '/beta') {
     pageContent = <BetaRequestPage />;
   } else if (pathname === '/beta-requested') {
     pageContent = new URLSearchParams(window.location.search).has('submitted')
       ? <BetaRequestConfirmationPage />
       : <BetaRequestPage />;
+  } else if (pathname === '/status') {
+    pageContent = <MaintenancePage />;
   } else if (pathname !== '/' && pathname !== '/terms') {
     pageContent = <NotFoundPage />;
   } else if (pathname === '/') {
-    pageContent = <MaintenancePage />;
+    pageContent = (
+      <>
+        <Header currentPath={pathname} />
+        <HomeContent />
+        <Footer />
+      </>
+    );
   } else {
     pageContent = <TermsPage />;
   }

@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from './lib/supabase.js';
 import { sitePath } from './site-path.js';
+import AdminPlatformPanel from './AdminPlatformPanel.jsx';
 
 const defaultSettings = {
   is_maintenance: true,
   maintenance_title: 'We’re making improvements.',
   maintenance_message: 'The website is temporarily under maintenance while we work on updates. There’s no confirmed reopening date yet. In the meantime, contact Sushil or request beta access.',
   support_online: false,
+  site_name: 'Sushil Pokharel',
+  site_description: 'Website information, account and support tools, policies, and Android app details from Sushil Pokharel in Bhaktapur, Nepal.',
 };
 
 export default function AdminPage() {
@@ -18,6 +21,14 @@ export default function AdminPage() {
   const [replyingTo, setReplyingTo] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
+
+  useEffect(() => {
+    document.title = 'Admin dashboard | Sushil Pokharel';
+    document.querySelector('meta[name="description"]')?.setAttribute(
+      'content',
+      'Manage site status, users, posts, announcements, support, and newsletter campaigns.',
+    );
+  }, []);
 
   async function loadSupportRequests() {
     setRequestsLoading(true);
@@ -43,6 +54,13 @@ export default function AdminPage() {
         return;
       }
 
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!session) {
+        if (isMounted) setAccess('signed-out');
+        return;
+      }
+
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
       if (!user) {
@@ -63,7 +81,7 @@ export default function AdminPage() {
 
       const { data, error } = await supabase
         .from('site_settings')
-        .select('is_maintenance, maintenance_title, maintenance_message, support_online, updated_at')
+        .select('is_maintenance, maintenance_title, maintenance_message, support_online, site_name, site_description, updated_at')
         .eq('id', 1)
         .single();
       if (error) throw error;
@@ -100,9 +118,11 @@ export default function AdminPage() {
           maintenance_title: settings.maintenance_title.trim(),
           maintenance_message: settings.maintenance_message.trim(),
           support_online: settings.support_online,
+          site_name: settings.site_name.trim(),
+          site_description: settings.site_description.trim(),
         })
         .eq('id', 1)
-        .select('is_maintenance, maintenance_title, maintenance_message, support_online, updated_at')
+        .select('is_maintenance, maintenance_title, maintenance_message, support_online, site_name, site_description, updated_at')
         .single();
       if (error) throw error;
       setSettings(data);
@@ -165,7 +185,7 @@ export default function AdminPage() {
       <>
         <h1>Sign in required</h1>
         <p className="auth-description">Sign in with your administrator account and authenticator to continue.</p>
-        <a className="auth-submit admin-inline-link" href={sitePath('/account')}>Go to sign in</a>
+        <a className="auth-submit admin-inline-link" href={sitePath('/admin/login')}>Go to administrator sign in</a>
       </>
     );
   } else if (access === 'forbidden') {
@@ -173,7 +193,7 @@ export default function AdminPage() {
       <>
         <h1>Administrator access required</h1>
         <p className="auth-description">This account is not an administrator. Only an account granted the admin role in Supabase can edit the public website status.</p>
-        <a className="auth-submit admin-inline-link" href={sitePath('/account')}>Go to account security</a>
+        <a className="auth-submit admin-inline-link" href={sitePath('/account/security')}>Go to account security</a>
       </>
     );
   } else if (access === 'mfa-required') {
@@ -181,7 +201,7 @@ export default function AdminPage() {
       <>
         <h1>Authenticator verification required</h1>
         <p className="auth-description">Admin actions require a verified authenticator and a fresh two-factor sign-in. Enable MFA or sign in again through your account page.</p>
-        <a className="auth-submit admin-inline-link" href={sitePath('/account')}>Go to account security</a>
+        <a className="auth-submit admin-inline-link" href={sitePath('/admin/login')}>Verify administrator sign in</a>
       </>
     );
   } else if (access === 'ready') {
@@ -189,7 +209,7 @@ export default function AdminPage() {
       <>
         <span className="auth-eyebrow">SITE ADMINISTRATION</span>
         <h1>Website status</h1>
-        <p className="auth-description">Edit the public home-page notice and choose whether the site is marked as under maintenance.</p>
+        <p className="auth-description">Edit the public home-page status and search metadata. AdSense scripts and the custom domain remain controlled by reviewed deployment files.</p>
         <form className="auth-form" onSubmit={handleSave}>
           <label className="admin-checkbox">
             <input
@@ -207,6 +227,27 @@ export default function AdminPage() {
             />
             <span>Support team is online and available</span>
           </label>
+          <div className="auth-field">
+            <label htmlFor="admin-site-name">Homepage/site name</label>
+            <input
+              id="admin-site-name"
+              value={settings.site_name}
+              onChange={(event) => setSettings((current) => ({ ...current, site_name: event.target.value }))}
+              maxLength={100}
+              required
+            />
+          </div>
+          <div className="auth-field">
+            <label htmlFor="admin-site-description">Homepage meta description</label>
+            <textarea
+              id="admin-site-description"
+              value={settings.site_description}
+              onChange={(event) => setSettings((current) => ({ ...current, site_description: event.target.value }))}
+              maxLength={300}
+              rows={3}
+              required
+            />
+          </div>
           <div className="auth-field">
             <label htmlFor="admin-maintenance-title">Home-page heading</label>
             <input
@@ -284,6 +325,7 @@ export default function AdminPage() {
             </ul>
           )}
         </section>
+        <AdminPlatformPanel />
       </>
     );
   } else {

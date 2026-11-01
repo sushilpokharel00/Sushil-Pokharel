@@ -55,6 +55,8 @@ jobs:
           cp dist/app.html dist/index.html
           cp dist/index.html dist/404.html
           cp ads.txt dist/ads.txt
+          mkdir -p dist/downloads
+          cp "$RUNNER_TEMP/android-download/Sushil-Pokharel.apk" dist/downloads/Sushil-Pokharel.apk
           if [ -f CNAME ]; then cp CNAME dist/CNAME; fi
           git rm -r --ignore-unmatch assets
           mkdir -p assets

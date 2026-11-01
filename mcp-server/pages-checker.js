@@ -1,4 +1,8 @@
 const githubPagesDomain = '.github.io';
+const officialSiteHosts = new Set([
+  'sushilpokharel00.com.np',
+  'www.sushilpokharel00.com.np',
+]);
 const requestTimeoutMs = 10_000;
 
 function parseSiteUrl(siteUrl) {
@@ -11,13 +15,13 @@ function parseSiteUrl(siteUrl) {
 
   if (
     url.protocol !== 'https:' ||
-    (!url.hostname.endsWith(githubPagesDomain) && !url.hostname.endsWith('sushilpokharel00.com.np')) ||
+    (!url.hostname.endsWith(githubPagesDomain) && !officialSiteHosts.has(url.hostname)) ||
     url.username ||
     url.password ||
     url.search ||
     url.hash
   ) {
-    throw new TypeError('siteUrl must be an HTTPS GitHub Pages URL without credentials, query, or fragment.');
+    throw new TypeError('siteUrl must be an HTTPS GitHub Pages URL or official site URL without credentials, query, or fragment.');
   }
 
   url.pathname = `${url.pathname.replace(/\/+$/, '')}/`;
@@ -63,6 +67,14 @@ function expectedClientPage(route) {
   if (route === 'beta') return 'beta-request';
   if (route === 'account' || route === 'login') return 'account';
   if (route === 'admin') return 'admin';
+  if (route === 'user' || route === 'dashboard') return 'user-dashboard';
+  if (route === 'privacy' || route === 'privacy-policy') return 'privacy';
+  if (route === 'disclaimer') return 'disclaimer';
+  if (route === 'contact') return 'contact';
+  if (route === 'support') return 'support';
+  if (route === 'app' || route === 'android' || route === 'android-app') return 'android-app';
+  if (route === 'posts') return 'published-posts';
+  if (route === 'newsletter') return 'newsletter-action';
   if (route === 'beta-requested') return 'beta-confirmation';
   return 'not-found';
 }
@@ -90,7 +102,21 @@ async function getPage(url, fetchImpl) {
 }
 
 export async function checkGithubPagesRoutes(
-  { siteUrl, routes = ['terms', 'beta', 'account', 'admin', '__mcp_not_found_probe__'] },
+  { siteUrl, routes = [
+    'terms',
+    'privacy',
+    'disclaimer',
+    'contact',
+    'support',
+    'app',
+    'user',
+    'posts',
+    'newsletter',
+    'beta',
+    'account',
+    'admin',
+    '__mcp_not_found_probe__',
+  ] },
   fetchImpl = fetch,
 ) {
   const baseUrl = parseSiteUrl(siteUrl);

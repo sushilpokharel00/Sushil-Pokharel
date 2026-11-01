@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { supabase, supabaseConfigurationError } from './lib/supabase.js';
+import { getDashboardPath, getUsernameError, normalizeUsername } from './lib/auth-routing.js';
+import { getPasswordPolicyError } from './lib/password-policy.js';
 import { sitePath } from './site-path.js';
 
 function setPageMetadata(title, description) {
@@ -7,7 +9,7 @@ function setPageMetadata(title, description) {
   document.querySelector('meta[name="description"]')?.setAttribute('content', description);
 }
 
-function AuthField({ id, label, type = 'text', autoComplete, minLength, value, onChange, required = true }) {
+function AuthField({ id, label, type = 'text', autoComplete, minLength, maxLength, value, onChange, required = true }) {
   return (
     <div className="auth-field">
       <label htmlFor={id}>{label}</label>
@@ -17,6 +19,7 @@ function AuthField({ id, label, type = 'text', autoComplete, minLength, value, o
         type={type}
         autoComplete={autoComplete}
         minLength={minLength}
+        maxLength={maxLength}
         value={value}
         onChange={onChange}
         required={required}
@@ -25,7 +28,7 @@ function AuthField({ id, label, type = 'text', autoComplete, minLength, value, o
   );
 }
 
-export default function AuthPage({ isAccountPage = false }) {
+export default function AuthPage({ isAccountPage = false, isAdminPage = false }) {
   const [session, setSession] = useState(null);
   const [screen, setScreen] = useState('loading');
   const [notice, setNotice] = useState(null);
@@ -35,6 +38,7 @@ export default function AuthPage({ isAccountPage = false }) {
   const [qrCode, setQrCode] = useState('');
   const [totpSecret, setTotpSecret] = useState('');
   const [verifiedFactor, setVerifiedFactor] = useState(null);
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -53,14 +57,17 @@ export default function AuthPage({ isAccountPage = false }) {
       'new-password': 'Choose a new password',
       'mfa-challenge': 'Verify your sign-in',
       'mfa-enroll': 'Set up two-factor authentication',
+      'mfa-required': 'Secure administrator sign-in',
       'mfa-disable': 'Manage two-factor authentication',
     };
     const title = isAccountPage && screen === 'sign-in' ? 'Your account' : titles[screen] || 'Your account';
     setPageMetadata(
       `${title} | Sushil Pokharel`,
-      'Manage your account, sign-in details, and authenticator-based two-factor security.',
+      isAdminPage
+        ? 'Sign in to the administrator dashboard with your administrator account.'
+        : 'Create an account or sign in securely to access your dashboard.',
     );
-  }, [isAccountPage, screen]);
+  }, [isAccountPage, isAdminPage, screen]);
 
   useEffect(() => {
     if (!supabase) {
@@ -94,7 +101,8 @@ export default function AuthPage({ isAccountPage = false }) {
         return;
       }
 
-      await continueWithSession();
+      const isSecurityPage = window.location.pathname.replace(/\/+$/, '') === sitePath('/account/security');
+      await continueWithSession({ redirectToDashboard: !isSecurityPage });
     }
 
     initializeSession().catch((error) => {
@@ -105,24 +113,47 @@ export default function AuthPage({ isAccountPage = false }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  async function continueWithSession() {
+  async function continueWithSession({ redirectToDashboard = false } = {}) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError) throw userError;
+    if (!user) throw new Error('Your sign-in session is no longer valid. Sign in again.');
+
+    const isAdmin = user.app_metadata?.role === 'admin';
+    if (isAdminPage && !isAdmin) {
+      await supabase.auth.signOut({ scope: 'local' });
+      setSession(null);
+      setScreen('sign-in');
+      throw new Error('Administrator sign-in failed. Check your credentials and try again.');
+    }
+
     const { data: assurance, error: assuranceError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     if (assuranceError) throw assuranceError;
 
-    if (assurance.nextLevel === 'aal2' && assurance.currentLevel !== 'aal2') {
-      const { data, error } = await supabase.auth.mfa.listFactors();
-      if (error) throw error;
-      const factor = data.totp.find((item) => item.status === 'verified');
-      if (factor) {
-        setFactorId(factor.id);
-        setScreen('mfa-challenge');
-        return 'mfa-challenge';
-      }
+    const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
+    if (factorsError) throw factorsError;
+    const factor = factors.totp.find((item) => item.status === 'verified') ?? null;
+    setVerifiedFactor(factor);
+
+    if (factor && assurance.nextLevel === 'aal2' && assurance.currentLevel !== 'aal2') {
+      setFactorId(factor.id);
+      setScreen('mfa-challenge');
+      return 'mfa-challenge';
+    }
+    if (isAdmin && !factor) {
+      setScreen('mfa-required');
+      return 'mfa-required';
     }
 
-    await refreshVerifiedFactor();
-    setScreen(recoveryFlowRef.current ? 'new-password' : 'account');
-    return recoveryFlowRef.current ? 'new-password' : 'account';
+    if (recoveryFlowRef.current) {
+      setScreen('new-password');
+      return 'new-password';
+    }
+    if (redirectToDashboard) {
+      window.location.replace(sitePath(getDashboardPath(user.app_metadata?.role)));
+      return 'redirected';
+    }
+    setScreen('account');
+    return 'account';
   }
 
   async function refreshVerifiedFactor() {
@@ -149,11 +180,27 @@ export default function AuthPage({ isAccountPage = false }) {
   async function handleSignIn(event) {
     event.preventDefault();
     await runAction(
-      () => supabase.auth.signInWithPassword({ email: email.trim(), password }),
+      async () => {
+        const { data, error } = await supabase.functions.invoke('sign-in-with-username', {
+          body: {
+            username: normalizeUsername(username),
+            password,
+            purpose: isAdminPage ? 'admin' : 'user',
+          },
+        });
+        if (error) throw error;
+        if (!data?.session?.access_token || !data?.session?.refresh_token) {
+          throw new Error('Invalid username or password.');
+        }
+        return supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+      },
       async () => {
         setPassword('');
-        const nextScreen = await continueWithSession();
-        if (nextScreen !== 'mfa-challenge') {
+        const nextScreen = await continueWithSession({ redirectToDashboard: true });
+        if (!['mfa-challenge', 'mfa-required', 'redirected'].includes(nextScreen)) {
           setNotice({ kind: 'success', text: 'You are signed in.' });
         }
       },
@@ -162,12 +209,22 @@ export default function AuthPage({ isAccountPage = false }) {
 
   async function handleSignUp(event) {
     event.preventDefault();
+    const usernameError = getUsernameError(username);
+    if (usernameError) {
+      setNotice({ kind: 'error', text: usernameError });
+      return;
+    }
+    const passwordError = getPasswordPolicyError(password);
+    if (passwordError) {
+      setNotice({ kind: 'error', text: passwordError });
+      return;
+    }
     await runAction(
       () => supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
-          data: { full_name: fullName.trim() },
+          data: { full_name: fullName.trim(), username: normalizeUsername(username) },
           emailRedirectTo: new URL(sitePath('/account'), window.location.origin).toString(),
         },
       }),
@@ -175,8 +232,8 @@ export default function AuthPage({ isAccountPage = false }) {
         setPassword('');
         if (data.session) {
           setSession(data.session);
-          const nextScreen = await continueWithSession();
-          if (nextScreen !== 'mfa-challenge') {
+          const nextScreen = await continueWithSession({ redirectToDashboard: true });
+          if (!['mfa-challenge', 'mfa-required', 'redirected'].includes(nextScreen)) {
             setNotice({ kind: 'success', text: 'Your account has been created.' });
           }
         } else {
@@ -199,6 +256,11 @@ export default function AuthPage({ isAccountPage = false }) {
 
   async function handleSetNewPassword(event) {
     event.preventDefault();
+    const passwordError = getPasswordPolicyError(newPassword);
+    if (passwordError) {
+      setNotice({ kind: 'error', text: passwordError });
+      return;
+    }
     await runAction(
       () => supabase.auth.updateUser({ password: newPassword }),
       async () => {
@@ -217,8 +279,7 @@ export default function AuthPage({ isAccountPage = false }) {
       async () => {
         setOtp('');
         await refreshVerifiedFactor();
-        setScreen('account');
-        setNotice({ kind: 'success', text: 'Two-factor verification complete.' });
+        await continueWithSession({ redirectToDashboard: true });
       },
     );
   }
@@ -247,7 +308,7 @@ export default function AuthPage({ isAccountPage = false }) {
         setQrCode('');
         setTotpSecret('');
         await refreshVerifiedFactor();
-        setScreen('account');
+        await continueWithSession({ redirectToDashboard: true });
         setNotice({ kind: 'success', text: 'Two-factor authentication is enabled.' });
       },
     );
@@ -269,7 +330,7 @@ export default function AuthPage({ isAccountPage = false }) {
     if (factorId) {
       await runAction(
         () => supabase.auth.mfa.unenroll({ factorId }),
-        () => setScreen('account'),
+        () => setScreen(isAdminPage ? 'mfa-required' : 'account'),
       );
       return;
     }
@@ -295,6 +356,11 @@ export default function AuthPage({ isAccountPage = false }) {
 
   async function handleChangePassword(event) {
     event.preventDefault();
+    const passwordError = getPasswordPolicyError(newPassword);
+    if (passwordError) {
+      setNotice({ kind: 'error', text: passwordError });
+      return;
+    }
     await runAction(
       () => supabase.auth.updateUser({ password: newPassword }),
       () => {
@@ -368,15 +434,17 @@ export default function AuthPage({ isAccountPage = false }) {
       <>
         <span className="auth-eyebrow">CREATE AN ACCOUNT</span>
         <h1>Sign up</h1>
-        <p className="auth-description">Create an account with your email address and a strong password.</p>
+        <p className="auth-description">Choose a username, provide your email address, and create a strong password.</p>
         <form className="auth-form" onSubmit={handleSignUp}>
           <AuthField id="signup-name" label="Name" autoComplete="name" value={fullName} onChange={(event) => setFullName(event.target.value)} />
+          <AuthField id="signup-username" label="Username (3–32 characters; start with a letter or number)" autoComplete="username" minLength={3} maxLength={32} value={username} onChange={(event) => setUsername(event.target.value)} />
           <AuthField id="signup-email" label="Email address" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} />
-          <AuthField id="signup-password" label="Password (at least 12 characters)" type="password" autoComplete="new-password" minLength={12} value={password} onChange={(event) => setPassword(event.target.value)} />
+          <AuthField id="signup-password" label="Password (8+ characters, upper/lowercase, number and symbol)" type="password" autoComplete="new-password" minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} />
           <label className="auth-consent">
             <input type="checkbox" required />
             <span>
-              I agree to the <a href={sitePath('/terms')}>Terms &amp; Conditions</a>.
+              I agree to the <a href={sitePath('/terms')}>Terms &amp; Conditions</a> and have read the{' '}
+              <a href={sitePath('/privacy')}>Privacy Policy</a>.
             </span>
           </label>
           <button className="auth-submit" type="submit" disabled={busy}>{busy ? 'Creating account…' : 'Create account'}</button>
@@ -407,6 +475,18 @@ export default function AuthPage({ isAccountPage = false }) {
           <AuthField id="login-otp" label="Authenticator code" type="text" autoComplete="one-time-code" value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))} />
           <button className="auth-submit" type="submit" disabled={busy || otp.length !== 6}>{busy ? 'Verifying…' : 'Verify and sign in'}</button>
         </form>
+      </>
+    );
+  } else if (screen === 'mfa-required') {
+    content = (
+      <>
+        <span className="auth-eyebrow">ADMINISTRATOR SECURITY</span>
+        <h1>Secure your administrator account</h1>
+        <p className="auth-description">Administrator access requires an authenticator app. Set it up before opening the dashboard.</p>
+        <button className="auth-submit" type="button" onClick={beginMfaEnrollment} disabled={busy}>
+          {busy ? 'Starting setup…' : 'Set up authenticator'}
+        </button>
+        <button className="auth-signout" type="button" onClick={handleSignOut} disabled={busy}>Sign out</button>
       </>
     );
   } else if (screen === 'mfa-enroll') {
@@ -442,9 +522,9 @@ export default function AuthPage({ isAccountPage = false }) {
       <>
         <span className="auth-eyebrow">ACCOUNT SECURITY</span>
         <h1>Choose a new password</h1>
-        <p className="auth-description">Use at least 12 characters. A password manager can help you create and store a unique password.</p>
+        <p className="auth-description">Use at least 8 characters, including uppercase and lowercase letters, a number, and a special character.</p>
         <form className="auth-form" onSubmit={handleSetNewPassword}>
-          <AuthField id="recovery-password" label="New password" type="password" autoComplete="new-password" minLength={12} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} />
+          <AuthField id="recovery-password" label="New password" type="password" autoComplete="new-password" minLength={8} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} />
           <button className="auth-submit" type="submit" disabled={busy}>{busy ? 'Updating…' : 'Update password'}</button>
         </form>
       </>
@@ -466,7 +546,7 @@ export default function AuthPage({ isAccountPage = false }) {
         </section>
         <form className="auth-form auth-password-form" onSubmit={handleChangePassword}>
           <h2>Change password</h2>
-          <AuthField id="account-new-password" label="New password (at least 12 characters)" type="password" autoComplete="new-password" minLength={12} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} />
+          <AuthField id="account-new-password" label="New password (8+ characters, upper/lowercase, number and symbol)" type="password" autoComplete="new-password" minLength={8} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} />
           <button className="auth-submit" type="submit" disabled={busy}>{busy ? 'Updating…' : 'Change password'}</button>
         </form>
         <button className="auth-signout" type="button" onClick={handleSignOut} disabled={busy}>Sign out</button>
@@ -518,17 +598,21 @@ export default function AuthPage({ isAccountPage = false }) {
   } else {
     content = (
       <>
-        <span className="auth-eyebrow">WELCOME BACK</span>
-        <h1>Sign in</h1>
-        <p className="auth-description">Sign in to manage your account and security settings.</p>
+        <span className="auth-eyebrow">{isAdminPage ? 'ADMINISTRATOR ACCESS' : 'WELCOME BACK'}</span>
+        <h1>{isAdminPage ? 'Administrator sign in' : 'Sign in'}</h1>
+        <p className="auth-description">
+          {isAdminPage
+            ? 'Use the username and password for your dedicated administrator account.'
+            : 'Sign in with your username and password to open your dashboard.'}
+        </p>
         <form className="auth-form" onSubmit={handleSignIn}>
-          <AuthField id="signin-email" label="Email address" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} />
+          <AuthField id="signin-username" label="Username or email" autoComplete="username" value={username} onChange={(event) => setUsername(event.target.value)} />
           <AuthField id="signin-password" label="Password" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} />
           <button className="auth-submit" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
         </form>
         <div className="auth-links">
           <button type="button" onClick={() => goTo('forgot-password')}>Forgot password?</button>
-          <button type="button" onClick={() => goTo('sign-up')}>Create account</button>
+          {!isAdminPage && <button type="button" onClick={() => goTo('sign-up')}>Create account</button>}
         </div>
       </>
     );
@@ -542,9 +626,9 @@ export default function AuthPage({ isAccountPage = false }) {
             <span className="auth-aside-mark" aria-hidden="true">SP</span>
             <span className="auth-eyebrow">YOUR ACCOUNT, YOUR CONTROL</span>
             <h1>Good to have you here.</h1>
-            <p>Sign in or create an account to manage your profile and security settings.</p>
+            <p>{isAdminPage ? 'Administrator sign-in is restricted to accounts explicitly granted the admin role.' : 'Sign in or create an account to open your secure user dashboard.'}</p>
             <ul className="auth-benefits">
-              <li><span>01</span><div><strong>Secure access</strong><small>Email confirmation and strong passwords help protect your account.</small></div></li>
+              <li><span>01</span><div><strong>Secure access</strong><small>Email confirmation, usernames, and strong passwords help protect your account.</small></div></li>
               <li><span>02</span><div><strong>Extra protection</strong><small>Enable an authenticator app for two-factor verification.</small></div></li>
               <li><span>03</span><div><strong>Stay in control</strong><small>Manage your password and security preferences any time.</small></div></li>
             </ul>

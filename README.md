@@ -1,19 +1,29 @@
 # Sushil Pokharel — Website
 
-A responsive personal website with a maintenance landing page, a beta access
-request flow, and a Terms & Conditions page.
+A responsive personal website with original home-page content, site policies,
+contact and support options, an Android app information page, and account and
+beta-access features. The home page is a maintenance/coming-soon landing page
+with a double-opt-in newsletter form and no countdown timer.
 
 ## Features
 
 - Responsive layouts for desktop and mobile
-- Dedicated maintenance, beta request, confirmation, terms, and not-found pages
+- Home, Terms & Conditions, Privacy Policy, Disclaimer, Contact, Support, and
+  Android app pages, plus published community posts at `/posts`
+- Dedicated beta request, confirmation, account, and not-found pages
 - Beta participation terms with required applicant acknowledgement
 - Accessible navigation, forms, and status messages
 - Email drafts prepared for review before sending
 - Account-protected support requests with an admin inbox and MCP-managed replies
 - Admin-controlled support availability indicator
-- Supabase email/password accounts, authenticator-app MFA, and password recovery
-- MFA-protected admin dashboard for the public home-page status and message
+- Supabase username/password accounts, authenticator-app MFA, and password recovery
+- User dashboard for profiles, avatars, notification settings, posts, and
+  platform announcements
+- MFA-protected admin dashboard for maintenance settings, support, accounts,
+  home-page metadata, post moderation, announcements, newsletter campaigns, and
+  traffic summaries
+- Double-opt-in newsletter subscriptions and Resend delivery through Supabase
+  Edge Functions
 
 ## Tech stack
 
@@ -22,6 +32,7 @@ request flow, and a Terms & Conditions page.
 - Capacitor 8 for Android
 - CSS
 - Supabase Auth
+- Supabase Postgres, Row Level Security, Storage, and Edge Functions
 
 ## Getting started
 
@@ -46,18 +57,27 @@ npm run preview
 The generated site is written to `dist/`. Build output and installed
 dependencies are intentionally excluded from version control.
 
-Pushing to `main` builds and deploys the site using
+Pushing to `main` builds and deploys the site at `https://sushilpokharel00.com.np/` using
 `.github/workflows/deploy-pages.yml`. The workflow also publishes the built
 HTML, fallback `404.html`, and assets to the repository root for branch-based
 GitHub Pages hosting. The fallback serves the app shell for routes such as
-`/terms`, which the client-side router then renders. `app.html` is the Vite
-source template; the root `index.html` and `404.html` are generated deployment
-output.
+`/terms`, `/privacy`, `/disclaimer`, `/contact`, `/app`, `/account/security`,
+`/admin/login`, `/user`, and `/posts`, which the client-side router then
+renders. `app.html` is the Vite source template; the
+root `index.html` and `404.html` are generated deployment output.
 
-The website header includes an Android app download button. Each Pages
-deployment builds the APK and updates the `android-download` GitHub Release,
-keeping the website button linked to the latest APK without adding binary
-files to the Pages site or Git history.
+The Google AdSense account tag and loader are included in the shared HTML
+template, so they load once across the site's pages. The root `ads.txt` entry
+is copied into the published site. Ad placement and consent messaging should
+be configured in the AdSense account; the site does not include placeholder ad
+units. The AdSense loader and publisher ID remain reviewed source-code
+configuration rather than editable admin text; arbitrary script injection is
+not allowed. The custom domain is configured through `CNAME`, DNS, and GitHub
+Pages settings, not changed by a runtime dashboard.
+
+Each Pages deployment builds the Android APK, publishes it at
+`https://sushilpokharel00.com.np/downloads/Sushil-Pokharel.apk`, and updates
+the `android-download` GitHub Release.
 
 The browser uses both `favicon.svg` and `favicon.ico` for the shared portrait
 logo. Android launcher icons are generated from the PNG embedded in
@@ -115,8 +135,9 @@ confirmed account with verified TOTP MFA. Supabase is persistent storage; the
 MCP server is a trusted local management interface, not a hosted database.
 
 The route checker tests the site root, Terms, beta, account and admin URLs, plus
-a probe path that should render the app's not-found page. For safety, it only
-requests HTTPS sites hosted on `github.io`.
+a probe path that should render the app's not-found page. It only requests
+HTTPS GitHub Pages sites or the official `sushilpokharel00.com.np` domain.
+The public website status and beta-request form are available at `/status`.
 
 Copy `.env.example` to `.env` and fill in the public Supabase project URL and
 anon/publishable key. Set `SUPABASE_SERVICE_ROLE_KEY` to the local-only
@@ -146,7 +167,7 @@ Example input for `check_github_pages_routes`:
 
 ```json
 {
-  "siteUrl": "https://sushilpokharel00.github.io/Sushil-Pokharel/",
+  "siteUrl": "https://sushilpokharel00.com.np/",
   "routes": ["terms", "beta"]
 }
 ```
@@ -155,11 +176,23 @@ Run its tests with `npm test`.
 
 ## Account authentication
 
-The `/account` page supports email/password sign-up and sign-in, email-confirmed
-registration, password reset and change, and TOTP authenticator enrollment,
-verification, and removal. Supabase verifies a TOTP challenge before a user
-with MFA enabled can finish signing in. Authentication is provided by Supabase;
-the website does not store account passwords itself.
+The `/account` page supports username-and-email registration,
+username/password sign-in, email-based password recovery, and TOTP
+authenticator enrollment, verification, and removal. Dashboard routes redirect
+signed-out visitors to sign-in, then route trusted admin accounts to `/admin`
+and standard accounts to `/user`. The administrator login is at
+`/admin/login`; it accepts only a dedicated account granted the trusted
+Supabase `app_metadata.role = admin` claim and requires verified TOTP MFA.
+Credentials and password verification remain in Supabase Auth; the website
+never stores passwords or hard-codes administrator credentials.
+
+Username sign-in uses the `sign-in-with-username` Edge Function to resolve a
+username to its private Auth email and then delegates password verification to
+Supabase Auth. The email mapping is not exposed to browser clients, and
+unknown usernames and incorrect passwords receive the same authentication
+response. Existing accounts receive a username based on their email's local
+part when possible; email sign-in remains available for accounts that need to
+recover or change their username.
 
 Create a Supabase project, enable email/password authentication, and set the
 email-confirmation and password policies in the Supabase dashboard. The deploy
@@ -170,10 +203,13 @@ The client also accepts the older `VITE_SUPABASE_ANON_KEY` name as a fallback.
 These public client configuration
 values are embedded in the generated website bundle; never use a Supabase
 service-role key in the browser or GitHub Pages.
-Allow the following redirect URL in Supabase Auth URL Configuration:
+Allow the account URLs in Supabase Auth URL Configuration:
 
 ```text
-https://sushilpokharel00.github.io/Sushil-Pokharel/account
+https://sushilpokharel00.com.np/account
+https://www.sushilpokharel00.com.np/account
+https://sushilpokharel00.com.np/account/security
+https://www.sushilpokharel00.com.np/account/security
 ```
 
 For local website development, put the public project values in `.env` as
@@ -181,7 +217,7 @@ shown in `.env.example`. The MCP service-role key is read only by the Node MCP
 process; Vite does not expose it to the browser because it is not prefixed
 with `VITE_`.
 
-Users can permanently delete their own account from `/account` after entering
+Users can permanently delete their own account from `/account/security` after entering
 `DELETE` to confirm. This calls the `delete-account` Supabase Edge Function,
 which validates the signed-in user and uses the server-side service-role key
 only to delete that same user's account. Related support requests are removed
@@ -191,21 +227,48 @@ by the database foreign-key cascade. Deploy it with
 in the Supabase project settings. Never put the service-role key in Vite
 environment variables or the GitHub Pages build.
 
+Deploy username sign-in separately with
+`supabase functions deploy sign-in-with-username`. It uses the same server-side
+`SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` function
+secrets. The function is configured for unauthenticated invocation because it
+is the login endpoint; it validates input, returns no email mapping, and uses
+Supabase Auth's password verification and rate limits. Never expose the
+service-role key to the browser.
+
 ## Admin dashboard
 
-After setting up Supabase, apply both
-`supabase/migrations/20261008000000_site_settings.sql` and
-`supabase/migrations/20261010000000_support_requests.sql` in the Supabase SQL
-Editor. The home page reads the public maintenance status, message, and support
-availability from the settings table. `/admin` lets an administrator update
-these settings and view the latest support requests.
+After setting up Supabase, apply all migrations in `supabase/migrations/` in
+timestamp order. With the Supabase CLI installed, link the project and apply
+the migrations:
+
+```bash
+supabase login
+supabase link --project-ref afbyphuozsdsajzngndq
+supabase db push
+```
+
+Alternatively, run each migration SQL file in order in the Supabase SQL
+Editor. This includes the site settings and support tables, then
+`20261101003814_user_platform_and_content.sql` for profiles, posts,
+announcements, newsletter data, analytics, storage, triggers, and RLS, followed
+by `20261101010920_username_authentication.sql` for unique usernames and
+username-based authentication.
+Do not expose database service-role credentials to the browser.
+
+The `/` route reads its maintenance heading and message from `site_settings`;
+the `/status` route retains the detailed status and beta-request experience.
+`/user` and `/dashboard` require a signed-in non-admin user. `/admin` is
+restricted to administrators with a verified TOTP MFA session. Neither
+dashboard is linked as a public page, and the router checks the session and
+role before rendering dashboard content.
 
 There is intentionally no default admin username or password. Create and
-confirm your own account at `/account`, enable and verify an authenticator,
+confirm a dedicated account at `/account`, enable and verify an authenticator,
 then call the MCP `grant_site_admin` tool with that exact email in both input
 fields. The tool verifies the account is email-confirmed and has verified TOTP
-before assigning the trusted `app_metadata` role. Sign out and back in after
-promotion so Supabase issues a fresh token, then visit `/admin`.
+before assigning the trusted `app_metadata` role. Record the account username
+and use its separate credentials at `/admin/login`. Sign out and back in after
+promotion so Supabase issues a fresh token, then open `/admin`.
 
 Row-level security allows only an `admin` role in
 Supabase-managed `app_metadata` with an `aal2` (MFA-verified) session to update
@@ -221,12 +284,100 @@ real-time presence.
 Apply the support-request migration before using `/support` or the admin inbox.
 The inbox and replies use the local MCP server; they do not send email.
 
+## Platform setup
+
+### Authentication, SMTP, and password policy
+
+In Supabase Authentication settings:
+
+1. Enable email/password sign-in and require email confirmation.
+2. Set the server-side password requirements to at least 8 characters,
+   including lowercase, uppercase, numeric, and special characters. The signup,
+   reset, and password-change forms enforce the same checks in the browser;
+   Supabase remains the authoritative enforcement point.
+3. Configure a trusted custom SMTP provider and review the confirmation,
+   password recovery, email-change, and password-change notification templates.
+   The site delegates those messages to Supabase Auth; SMTP passwords and
+   provider API keys are never placed in the frontend.
+   In Authentication → Email Templates, use
+   `supabase/templates/password-recovery.html` for the reset-password email and
+   `supabase/templates/password-changed-notification.html` for the password
+   changed security notification. Enable the project-level password-changed
+   security notification so Supabase sends the alert after a successful
+   password change.
+4. Add the website's account URL to Authentication URL Configuration, and
+   ensure the confirmation/recovery redirect URLs use the official custom
+   domain. For local testing, add the local Vite account URL as well.
+
+The account page supports registration, sign-in/out, email verification,
+password reset/change, and authenticator enrollment and challenge. Supabase
+Auth sends password-related email notifications according to the project's
+configured templates and security settings.
+
+### Newsletter and analytics Edge Functions
+
+The newsletter uses Resend for double-opt-in confirmation messages and admin
+campaigns. Verify the sender domain with Resend first. Set these **Edge
+Function secrets** in the Supabase project (never in Vite, `.env`, or a
+committed file):
+
+```bash
+supabase secrets set RESEND_API_KEY="your-resend-api-key" NEWSLETTER_FROM_EMAIL="Website <updates@your-verified-domain.example>" NEWSLETTER_TOKEN_SECRET="use-a-random-secret-of-at-least-32-bytes" ANALYTICS_HASH_SECRET="use-a-different-random-secret-of-at-least-32-bytes"
+```
+
+Supabase provides the function runtime's project URL and server credentials.
+Deploy the functions after applying the platform migration:
+
+```bash
+supabase functions deploy newsletter
+supabase functions deploy admin-platform
+supabase functions deploy record-page-view
+```
+
+`newsletter` stores confirmation-token hashes and sends confirmation links
+that expire after 24 hours. Admin campaigns contain unsubscribe links.
+`record-page-view` stores a daily keyed hash and page path, not the raw visitor
+IP; the dashboard's visitor and recent-sign-in counts are estimates, not
+audited analytics. No uptime-monitoring provider is connected, so the admin
+dashboard explicitly reports uptime as unconfigured. Configure a dedicated
+monitoring service if uptime history or alerting is required. Review the
+Privacy Policy before enabling analytics and advertising in production.
+
+### Local environment and secrets
+
+Copy `.env.example` to `.env` for local browser development and the trusted MCP
+server. Only `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` are
+browser-safe; all `VITE_` values are included in the public site bundle. The
+non-`VITE_` service-role key is for local MCP administration only. Do not put
+Resend or analytics signing secrets in `.env`, GitHub Actions, or the frontend.
+Use Supabase Edge Function secrets for those values.
+
+### GitHub publishing
+
+The website's configured remote and Pages workflow deploy from `main`. Review
+the worktree, commit the intended changes, and push:
+
+```bash
+git status
+git add .
+git commit -m "Update website platform"
+git push origin main
+```
+
+The Actions workflow builds and publishes the website and Android APK. Check
+the Actions run and the custom-domain pages after deployment. Never commit
+`.env`, service-role keys, SMTP credentials, Resend keys, app-signing keys, or
+generated credentials.
+
 ## Project structure
 
 ```text
 src/
-  AdminPage.jsx Admin-only status editor and support inbox
+  AdminPage.jsx Admin-only settings, moderation, user, and newsletter panel
+  AdminPlatformPanel.jsx Admin metrics, accounts, posts, announcements, campaigns
   AuthPage.jsx  Account, sign-in, signup, MFA, and password flows
+  UserDashboard.jsx Profile, post, announcement, and preference management
+  InfoPages.jsx Public legal, app, newsletter, posts, and landing pages
   SupportPage.jsx Signed-in support requests and replies
   App.jsx       Page content and interactions
   lib/
@@ -247,13 +398,17 @@ mcp-server/
   pages-checker.js  GitHub Pages route diagnostics
   pages-checker.test.js
 supabase/
-  functions/delete-account/  Authenticated self-service account deletion
-  migrations/   Public status and private support tables with access policies
+  functions/       Authenticated account, newsletter, and analytics endpoints
+  migrations/      Status, support, and user-platform schema/RLS
 app.html        Vite HTML source template
 vite.config.js  Vite configuration for the GitHub Pages project path
 index.html      Generated GitHub Pages entry point
 404.html        Generated GitHub Pages SPA fallback
 ```
+
+Run the frontend tests and production build with `npm test` and `npm run build`.
+The new platform migration and Edge Functions must still be deployed to the
+Supabase project; building the frontend does not apply or deploy them.
 
 The Terms & Conditions content is general information, not legal advice.
 Review it with a qualified legal professional before relying on it.

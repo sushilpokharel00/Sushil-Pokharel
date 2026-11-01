@@ -15,9 +15,9 @@ server.registerTool(
   'check_github_pages_routes',
   {
     title: 'Check GitHub Pages routes',
-    description: 'Check a public GitHub Pages root, the Terms, beta, account, admin routes, and an unknown route that should display the app 404 page.',
+    description: 'Check a public GitHub Pages or official site root, the Terms, beta, account, admin routes, and an unknown route that should display the app 404 page.',
     inputSchema: {
-      siteUrl: z.string().url().describe('The HTTPS GitHub Pages site URL, including its project path if applicable.'),
+      siteUrl: z.string().url().describe('The HTTPS GitHub Pages or official site URL, including its project path if applicable.'),
       routes: z.array(z.string()).optional().describe('Relative same-site routes to check; defaults to terms, beta, account, admin, and an unknown route.'),
     },
     annotations: {
