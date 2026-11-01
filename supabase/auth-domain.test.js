@@ -4,6 +4,8 @@ import test from 'node:test';
 
 const root = new URL('../', import.meta.url);
 const config = await readFile(new URL('supabase/config.toml', root), 'utf8');
+const authPage = await readFile(new URL('src/AuthPage.jsx', root), 'utf8');
+const appTemplate = await readFile(new URL('app.html', root), 'utf8');
 const confirmationTemplate = await readFile(new URL('supabase/templates/confirmation.html', root), 'utf8');
 const recoveryTemplate = await readFile(new URL('supabase/templates/password-recovery.html', root), 'utf8');
 const passwordChangedTemplate = await readFile(new URL('supabase/templates/password-changed-notification.html', root), 'utf8');
@@ -29,11 +31,25 @@ test('configured email template paths resolve relative to the Supabase directory
 
 test('auth email templates use Supabase confirmation links and the production domain', () => {
   assert.match(confirmationTemplate, /href="\{\{ \.ConfirmationURL \}\}"/);
-  assert.match(recoveryTemplate, /href="\{\{ \.ConfirmationURL \}\}"/);
+  assert.match(recoveryTemplate, /\{\{ \.Token \}\}/);
+  assert.doesNotMatch(recoveryTemplate, /\.ConfirmationURL/);
+  assert.match(confirmationTemplate, /https:\/\/sushilpokharel00\.com\.np\/account/);
+  assert.match(recoveryTemplate, /https:\/\/sushilpokharel00\.com\.np\/reset-password/);
+  assert.match(passwordChangedTemplate, /https:\/\/sushilpokharel00\.com\.np\/account/);
   for (const template of [confirmationTemplate, recoveryTemplate, passwordChangedTemplate]) {
-    assert.match(template, /https:\/\/sushilpokharel00\.com\.np\/account/);
     assert.doesNotMatch(template, /https?:\/\/(?!sushilpokharel00\.com\.np)/i);
   }
+});
+
+test('password recovery sends and verifies Supabase recovery OTPs', () => {
+  assert.match(authPage, /resetPasswordForEmail\(email\.trim\(\)/);
+  assert.match(
+    authPage,
+    /verifyOtp\(\{\s*email:\s*email\.trim\(\),\s*token:\s*recoveryOtp,\s*type:\s*'recovery'/,
+  );
+  assert.match(authPage, /setRecoveryResendSeconds\(60\)/);
+  assert.match(authPage, /pattern="\[0-9\]\{6\}"/);
+  assert.match(appTemplate, /replaceState\(null, '', `\/reset-password/);
 });
 
 test('web hosting and Android use the production domain for app links and redirects', () => {

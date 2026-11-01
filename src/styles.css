@@ -1427,7 +1427,8 @@ a:focus-visible {
 }
 
 .auth-links button,
-.auth-switch button {
+.auth-switch button,
+.auth-switch-button {
   padding: 0;
   border: 0;
   background: transparent;
@@ -1436,6 +1437,45 @@ a:focus-visible {
   font: 600 13px/1.5 'DM Sans', sans-serif;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+.auth-recovery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.auth-recovery-actions .auth-secondary {
+  min-height: 42px;
+  padding: 10px 14px;
+  border-color: #dfe5e1;
+  background: #fff;
+  color: var(--accent-dark);
+}
+
+.auth-recovery-actions .auth-secondary:hover:not(:disabled) {
+  border-color: #b9c9c0;
+  background: #f5f8f6;
+}
+
+.auth-switch-button {
+  min-height: 42px;
+  color: var(--accent-dark);
+  cursor: pointer;
+  font: 700 12px/1.4 'DM Sans', sans-serif;
+}
+
+.auth-switch-button:hover:not(:disabled) {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.auth-switch-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .auth-switch {

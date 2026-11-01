@@ -190,8 +190,9 @@ Run its tests with `npm test`.
 ## Account authentication
 
 The `/account` page supports username-and-email registration,
-username/password sign-in, email-based password recovery, and TOTP
-authenticator enrollment, verification, and removal. Dashboard routes redirect
+username/password sign-in, email-based password recovery with a six-digit OTP,
+and TOTP authenticator enrollment, verification, and removal. Recovery codes
+can be resent after a 60-second cooldown. Dashboard routes redirect
 signed-out visitors to sign-in, then route trusted admin accounts to `/admin`
 and standard accounts to `/user`. The administrator login is at
 `/admin/login`; it accepts only a dedicated account granted the trusted
@@ -250,21 +251,24 @@ https://sushilpokharel00.com.np/account
 https://sushilpokharel00.com.np/reset-password
 ```
 
-The app sends signup confirmations to `/account` and password-recovery links
+The app sends signup confirmations to `/account` and password-recovery codes
 to `/reset-password` on the production site. The checked-in `supabase/config.toml`
 and templates configure the Supabase CLI's local stack only. For the hosted project, copy
 the confirmation, recovery, and password-changed templates from
-`supabase/templates/` into **Authentication → Email Templates**. Recovery
-links open the dedicated password form at `/reset-password`.
+`supabase/templates/` into **Authentication → Email Templates**. The hosted
+Reset Password template must include `{{ .Token }}` so Supabase emails the
+six-digit code; the recovery form verifies it with the `recovery` OTP type
+before accepting a new password.
 
 For local website development, put the public project values in `.env` as
 shown in `.env.example`. The MCP service-role key is read only by the Node MCP
 process; Vite does not expose it to the browser because it is not prefixed
 with `VITE_`.
 
-The Supabase Edge Functions also allow the local development origin on port
-3000. To use the local app with those hosted functions, deploy the updated
-function sources:
+The Supabase Edge Functions allow the production website origin. Do not add a
+local development origin to the production functions; use a separate
+development Supabase project for local testing. Deploy updated function
+sources to the hosted project with:
 
 ```bash
 supabase functions deploy sign-in-with-username
@@ -371,14 +375,16 @@ In Supabase Authentication settings:
    changed security notification. Enable the project-level password-changed
    security notification so Supabase sends the alert after a successful
    password change.
-4. Add the website's account URL to Authentication URL Configuration, and
-   ensure the confirmation/recovery redirect URLs use the official custom
-   domain. For local testing, add the local Vite account URL as well.
+4. Set the Site URL and confirmation/recovery redirect allowlist to the
+   official production domain and the account/reset-password routes documented
+   above. Do not add local development URLs to production Auth settings; use a
+   separate Supabase project for local testing.
 
 The account page supports registration, sign-in/out, email verification,
-password reset/change, and authenticator enrollment and challenge. Supabase
-Auth sends password-related email notifications according to the project's
-configured templates and security settings.
+six-digit email OTP password recovery, password changes, and authenticator
+enrollment and challenge. Supabase Auth sends password-related email
+notifications according to the project's configured templates and security
+settings.
 
 ### Newsletter and analytics Edge Functions
 

@@ -18,7 +18,19 @@ function setPageMetadata(title, description) {
   document.querySelector('meta[name="description"]')?.setAttribute('content', description);
 }
 
-function AuthField({ id, label, type = 'text', autoComplete, minLength, maxLength, value, onChange, required = true }) {
+function AuthField({
+  id,
+  label,
+  type = 'text',
+  autoComplete,
+  inputMode,
+  pattern,
+  minLength,
+  maxLength,
+  value,
+  onChange,
+  required = true,
+}) {
   return (
     <div className="auth-field">
       <label htmlFor={id}>{label}</label>
@@ -27,6 +39,8 @@ function AuthField({ id, label, type = 'text', autoComplete, minLength, maxLengt
         name={id}
         type={type}
         autoComplete={autoComplete}
+        inputMode={inputMode}
+        pattern={pattern}
         minLength={minLength}
         maxLength={maxLength}
         value={value}
@@ -51,6 +65,8 @@ export default function AuthPage({ isAccountPage = false, isAdminPage = false })
   const [verifiedFactor, setVerifiedFactor] = useState(null);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
+  const [recoveryOtp, setRecoveryOtp] = useState('');
+  const [recoveryResendSeconds, setRecoveryResendSeconds] = useState(0);
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [otp, setOtp] = useState('');
@@ -60,10 +76,20 @@ export default function AuthPage({ isAccountPage = false, isAdminPage = false })
   const recoveryFlowRef = useRef(isPasswordRecoveryUrl(window.location));
 
   useEffect(() => {
+    if (recoveryResendSeconds <= 0) return undefined;
+    const timer = window.setTimeout(
+      () => setRecoveryResendSeconds((seconds) => Math.max(0, seconds - 1)),
+      1000,
+    );
+    return () => window.clearTimeout(timer);
+  }, [recoveryResendSeconds]);
+
+  useEffect(() => {
     const titles = {
       'sign-in': 'Sign in',
       'sign-up': 'Create an account',
       'forgot-password': 'Reset your password',
+      'verify-recovery-otp': 'Verify your email',
       account: 'Your account',
       'new-password': 'Choose a new password',
       'mfa-challenge': 'Verify your sign-in',
@@ -115,8 +141,19 @@ export default function AuthPage({ isAccountPage = false, isAdminPage = false })
           window.__passwordRecoveryRedirect = false;
           window.history.replaceState(null, '', sitePath('/account'));
           setNotice({ kind: 'error', text: 'This password reset link is invalid or expired. Request a new one to continue.' });
+        } else if (window.location.pathname.replace(/\/+$/, '') === sitePath('/reset-password')) {
+          setScreen('forgot-password');
+          return;
         }
         setScreen('sign-in');
+        return;
+      }
+
+      if (
+        window.location.pathname.replace(/\/+$/, '') === sitePath('/reset-password')
+        && !recoveryFlowRef.current
+      ) {
+        setScreen('forgot-password');
         return;
       }
 
@@ -269,7 +306,51 @@ export default function AuthPage({ isAccountPage = false, isAdminPage = false })
       () => supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: getAuthRedirectUrl(sitePath('/reset-password'), authRedirectOrigin),
       }),
-      () => setNotice({ kind: 'success', text: 'If an account exists for that email, a password reset link is on its way.' }),
+      () => {
+        setRecoveryOtp('');
+        setRecoveryResendSeconds(60);
+        window.history.replaceState(null, '', sitePath('/reset-password'));
+        setScreen('verify-recovery-otp');
+        setNotice({ kind: 'success', text: 'If an account exists for that email, a six-digit verification code is on its way.' });
+      },
+    );
+  }
+
+  async function handleVerifyRecoveryOtp(event) {
+    event.preventDefault();
+    if (!/^\d{6}$/.test(recoveryOtp)) {
+      setNotice({ kind: 'error', text: 'Enter the six-digit code from your email.' });
+      return;
+    }
+
+    await runAction(
+      () => supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: recoveryOtp,
+        type: 'recovery',
+      }),
+      ({ data }) => {
+        if (!data.session) throw new Error('The verification code was not accepted. Request a new code and try again.');
+        recoveryFlowRef.current = true;
+        setSession(data.session);
+        setRecoveryOtp('');
+        setNewPassword('');
+        setScreen('new-password');
+        setNotice({ kind: 'success', text: 'Email verified. Choose a new password for your account.' });
+      },
+    );
+  }
+
+  async function handleResendRecoveryOtp() {
+    await runAction(
+      () => supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: getAuthRedirectUrl(sitePath('/reset-password'), authRedirectOrigin),
+      }),
+      () => {
+        setRecoveryOtp('');
+        setRecoveryResendSeconds(60);
+        setNotice({ kind: 'success', text: 'If an account exists for that email, a new verification code is on its way.' });
+      },
     );
   }
 
@@ -478,12 +559,42 @@ export default function AuthPage({ isAccountPage = false, isAdminPage = false })
       <>
         <span className="auth-eyebrow">ACCOUNT RECOVERY</span>
         <h1>Reset your password</h1>
-        <p className="auth-description">We’ll email you a secure link to choose a new password.</p>
+        <p className="auth-description">We’ll email you a one-time verification code so you can securely choose a new password.</p>
         <form className="auth-form" onSubmit={handlePasswordReset}>
           <AuthField id="reset-email" label="Email address" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} />
-          <button className="auth-submit" type="submit" disabled={busy}>{busy ? 'Sending…' : 'Send reset link'}</button>
+          <button className="auth-submit" type="submit" disabled={busy}>{busy ? 'Sending code…' : 'Email me a code'}</button>
         </form>
         <p className="auth-switch"><button type="button" onClick={() => goTo('sign-in')}>Back to sign in</button></p>
+      </>
+    );
+  } else if (screen === 'verify-recovery-otp') {
+    content = (
+      <>
+        <span className="auth-eyebrow">EMAIL VERIFICATION</span>
+        <h1>Enter your verification code</h1>
+        <p className="auth-description">If an account exists for <strong>{email}</strong>, we’ve emailed a six-digit code. Enter it below to continue.</p>
+        <form className="auth-form" onSubmit={handleVerifyRecoveryOtp}>
+          <AuthField
+            id="recovery-otp"
+            label="Six-digit email code"
+            type="text"
+            autoComplete="one-time-code"
+            inputMode="numeric"
+            pattern="[0-9]{6}"
+            maxLength={6}
+            value={recoveryOtp}
+            onChange={(event) => setRecoveryOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
+          />
+          <button className="auth-submit" type="submit" disabled={busy || recoveryOtp.length !== 6}>{busy ? 'Verifying…' : 'Verify code'}</button>
+        </form>
+        <div className="auth-recovery-actions">
+          <button className="auth-secondary" type="button" onClick={handleResendRecoveryOtp} disabled={busy || recoveryResendSeconds > 0}>
+            {recoveryResendSeconds > 0 ? `Resend code in ${recoveryResendSeconds}s` : 'Resend code'}
+          </button>
+          <button className="auth-switch-button" type="button" disabled={busy} onClick={() => { setRecoveryOtp(''); setRecoveryResendSeconds(0); goTo('forgot-password'); }}>
+            Change email
+          </button>
+        </div>
       </>
     );
   } else if (screen === 'mfa-challenge') {
@@ -543,7 +654,7 @@ export default function AuthPage({ isAccountPage = false, isAdminPage = false })
       <>
         <span className="auth-eyebrow">ACCOUNT SECURITY</span>
         <h1>Choose a new password</h1>
-        <p className="auth-description">Use at least 8 characters, including uppercase and lowercase letters, a number, and a special character.</p>
+        <p className="auth-description">Your email is verified. Use at least 8 characters, including uppercase and lowercase letters, a number, and a special character.</p>
         <form className="auth-form" onSubmit={handleSetNewPassword}>
           <AuthField id="recovery-password" label="New password" type="password" autoComplete="new-password" minLength={8} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} />
           <button className="auth-submit" type="submit" disabled={busy}>{busy ? 'Updating…' : 'Update password'}</button>

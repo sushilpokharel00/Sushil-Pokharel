@@ -19,7 +19,7 @@
     <script>
       if (new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery') {
         window.__passwordRecoveryRedirect = true;
-        window.history.replaceState(null, '', `/account${window.location.hash}`);
+        window.history.replaceState(null, '', `/reset-password${window.location.hash}`);
       }
     </script>
     <script type="module" src="/src/main.jsx"></script>
