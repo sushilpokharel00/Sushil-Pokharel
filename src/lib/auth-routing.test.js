@@ -19,8 +19,9 @@ test('username validation matches the database constraints', () => {
   assert.notEqual(getUsernameError('has space'), '');
 });
 
-test('dashboard routes are selected only from the trusted role value', () => {
-  assert.equal(getDashboardPath('admin'), '/admin');
+test('only the trusted super-admin role opens the administrator dashboard', () => {
+  assert.equal(getDashboardPath('super_admin'), '/admin');
+  assert.equal(getDashboardPath('admin'), '/user');
   assert.equal(getDashboardPath('user'), '/user');
   assert.equal(getDashboardPath(undefined), '/user');
 });

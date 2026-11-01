@@ -77,7 +77,7 @@ async function authenticateAdmin(request: Request, supabaseUrl: string, anonKey:
     client.auth.mfa.getAuthenticatorAssuranceLevel(),
   ]);
   if (userError || !user) return { error: 'Your sign-in session is invalid or expired.' };
-  if (user.app_metadata?.role !== 'admin') return { error: 'Administrator access is required.' };
+  if (user.app_metadata?.role !== 'super_admin') return { error: 'Super Admin access is required.' };
   if (assuranceError || assurance.currentLevel !== 'aal2') {
     return { error: 'Verify your authenticator before using administrator features.' };
   }
@@ -268,7 +268,7 @@ Deno.serve(async (request: Request) => {
         users: data.users.map((item) => ({
           id: item.id,
           email: item.email ?? '',
-          role: item.app_metadata?.role === 'admin' ? 'admin' : 'user',
+          role: item.app_metadata?.role === 'super_admin' ? 'super_admin' : 'user',
           confirmed: Boolean(item.email_confirmed_at ?? item.confirmed_at),
           banned: Boolean(item.banned_until && new Date(item.banned_until).getTime() > Date.now()),
           createdAt: item.created_at,
@@ -318,17 +318,17 @@ Deno.serve(async (request: Request) => {
       if (targetUserId === auth.user.id) return jsonResponse({ error: 'You cannot change or delete your own administrator account here.' }, 400, origin);
       const { data: target, error: targetError } = await adminClient.auth.admin.getUserById(targetUserId);
       if (targetError || !target.user) return jsonResponse({ error: 'The selected account was not found.' }, 404, origin);
-      const targetIsAdmin = target.user.app_metadata?.role === 'admin';
-      if ((operation === 'demote' || operation === 'delete' || operation === 'ban') && targetIsAdmin) {
+      const targetIsSuperAdmin = target.user.app_metadata?.role === 'super_admin';
+      if ((operation === 'demote' || operation === 'delete' || operation === 'ban') && targetIsSuperAdmin) {
         const users = await listAllUsers(adminClient);
         const now = Date.now();
-        const otherAvailableAdmins = users.filter((item) =>
+        const otherAvailableSuperAdmins = users.filter((item) =>
           item.id !== targetUserId &&
-          item.app_metadata?.role === 'admin' &&
+          item.app_metadata?.role === 'super_admin' &&
           (!item.banned_until || new Date(item.banned_until).getTime() <= now),
         );
-        if (otherAvailableAdmins.length === 0) {
-          return jsonResponse({ error: 'At least one available administrator must remain.' }, 409, origin);
+        if (otherAvailableSuperAdmins.length === 0) {
+          return jsonResponse({ error: 'At least one available Super Admin must remain.' }, 409, origin);
         }
       }
       if (operation === 'promote') {
@@ -348,7 +348,7 @@ Deno.serve(async (request: Request) => {
       } else {
         const appMetadata = target.user.app_metadata ?? {};
         const { error } = await adminClient.auth.admin.updateUserById(targetUserId, {
-          app_metadata: { ...appMetadata, role: operation === 'promote' ? 'admin' : 'user' },
+          app_metadata: { ...appMetadata, role: operation === 'promote' ? 'super_admin' : 'user' },
         });
         if (error) throw error;
       }

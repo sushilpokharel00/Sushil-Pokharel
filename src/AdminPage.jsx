@@ -67,7 +67,7 @@ export default function AdminPage() {
         if (isMounted) setAccess('signed-out');
         return;
       }
-      if (user.app_metadata?.role !== 'admin') {
+      if (user.app_metadata?.role !== 'super_admin') {
         if (isMounted) setAccess('forbidden');
         return;
       }
@@ -192,7 +192,7 @@ export default function AdminPage() {
     content = (
       <>
         <h1>Administrator access required</h1>
-        <p className="auth-description">This account is not an administrator. Only an account granted the admin role in Supabase can edit the public website status.</p>
+        <p className="auth-description">This account is not a Super Admin. Only an account granted the trusted super_admin role in Supabase can manage the website.</p>
         <a className="auth-submit admin-inline-link" href={sitePath('/account/security')}>Go to account security</a>
       </>
     );

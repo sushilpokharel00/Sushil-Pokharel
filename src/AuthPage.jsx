@@ -137,7 +137,7 @@ export default function AuthPage({ isAccountPage = false, isAdminPage = false })
     if (userError) throw userError;
     if (!user) throw new Error('Your sign-in session is no longer valid. Sign in again.');
 
-    const isAdmin = user.app_metadata?.role === 'admin';
+    const isAdmin = user.app_metadata?.role === 'super_admin';
     if (isAdminPage && !isAdmin) {
       await supabase.auth.signOut({ scope: 'local' });
       setSession(null);
@@ -647,7 +647,7 @@ export default function AuthPage({ isAccountPage = false, isAdminPage = false })
             <span className="auth-aside-mark" aria-hidden="true">SP</span>
             <span className="auth-eyebrow">YOUR ACCOUNT, YOUR CONTROL</span>
             <h1>Good to have you here.</h1>
-            <p>{isAdminPage ? 'Administrator sign-in is restricted to accounts explicitly granted the admin role.' : 'Sign in or create an account to open your secure user dashboard.'}</p>
+            <p>{isAdminPage ? 'Super Admin sign-in is restricted to accounts explicitly granted the trusted Super Admin role.' : 'Sign in or create an account to open your secure user dashboard.'}</p>
             <ul className="auth-benefits">
               <li><span>01</span><div><strong>Secure access</strong><small>Email confirmation, usernames, and strong passwords help protect your account.</small></div></li>
               <li><span>02</span><div><strong>Extra protection</strong><small>Enable an authenticator app for two-factor verification.</small></div></li>

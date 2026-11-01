@@ -9,6 +9,7 @@
     "android:sync": "node scripts/generate-android-icons.mjs && npm run build -- --base=/ && node scripts/prepare-android.mjs && cap sync android",
     "preview": "vite preview",
     "mcp": "node mcp-server/index.js",
+    "seed:super-admin": "node scripts/seed-super-admin.mjs",
     "test": "node --test"
   },
   "dependencies": {

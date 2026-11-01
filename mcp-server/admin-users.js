@@ -106,7 +106,7 @@ export async function grantSiteAdmin(
     path: `/auth/v1/admin/users/${encodeURIComponent(targetUser.id)}`,
     method: 'PUT',
     body: {
-      app_metadata: { ...appMetadata, role: 'admin' },
+      app_metadata: { ...appMetadata, role: 'super_admin' },
     },
     fetchImpl,
   });
@@ -115,7 +115,7 @@ export async function grantSiteAdmin(
     updated: true,
     userId: result.user?.id ?? targetUser.id,
     email: result.user?.email ?? targetUser.email,
-    role: result.user?.app_metadata?.role ?? 'admin',
-    note: 'Sign out and sign back in to receive an updated administrator token.',
+    role: result.user?.app_metadata?.role ?? 'super_admin',
+    note: 'Sign out and sign back in to receive an updated Super Admin token.',
   };
 }

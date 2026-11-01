@@ -1120,7 +1120,7 @@ function DashboardGate({ isAdmin, children }) {
           return;
         }
 
-        const hasAdminRole = user.app_metadata?.role === 'admin';
+        const hasAdminRole = user.app_metadata?.role === 'super_admin';
         if (isAdmin && !hasAdminRole) {
           redirect('/user');
           return;

@@ -76,7 +76,7 @@ export default function UserDashboard() {
     setPosts(postResult.data);
     setAnnouncements(announcementResult.data);
     setActivity(activityResult.data);
-    setState(currentUser.app_metadata?.role === 'admin' ? 'admin' : 'ready');
+    setState(currentUser.app_metadata?.role === 'super_admin' ? 'admin' : 'ready');
   }
 
   useEffect(() => {
@@ -269,7 +269,7 @@ export default function UserDashboard() {
   } else if (state === 'signed-out') {
     content = <p>Sign in to access your dashboard. <a href={sitePath('/account')}>Sign in</a></p>;
   } else if (state === 'admin') {
-    content = <p>Your account has the administrator role. Open the <a href={sitePath('/admin')}>admin dashboard</a>.</p>;
+    content = <p>Your account has the Super Admin role. Open the <a href={sitePath('/admin')}>admin dashboard</a>.</p>;
   } else if (state === 'error') {
     content = <p>We could not load your dashboard. Confirm the platform migration is applied and try again.</p>;
   } else {

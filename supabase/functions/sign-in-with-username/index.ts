@@ -119,7 +119,7 @@ Deno.serve(async (request: Request) => {
   if (error || !data.session || !data.user) {
     return jsonResponse(invalidCredentials, 401, origin);
   }
-  if (purpose === 'admin' && data.user.app_metadata?.role !== 'admin') {
+  if (purpose === 'admin' && data.user.app_metadata?.role !== 'super_admin') {
     return jsonResponse(invalidCredentials, 401, origin);
   }
 

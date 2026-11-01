@@ -145,8 +145,8 @@ server.registerTool(
 server.registerTool(
   'grant_site_admin',
   {
-    title: 'Grant site administrator role',
-    description: 'Grant the Supabase app_metadata admin role to an email-confirmed account that already has verified TOTP MFA. Requires the local service-role key and exact email confirmation; sign out and back in after promotion.',
+    title: 'Grant Super Admin role',
+    description: 'Grant the Supabase app_metadata super_admin role to an email-confirmed account that already has verified TOTP MFA. Requires the local service-role key and exact email confirmation; sign out and back in after promotion.',
     inputSchema: {
       email: z.string().email().describe('Email address of the existing confirmed Supabase account with verified TOTP MFA.'),
       confirmationEmail: z.string().email().describe('Repeat the target email exactly to confirm granting administrator access.'),

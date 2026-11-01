@@ -242,10 +242,10 @@ export default function AdminPlatformPanel() {
                       <span>{user.role} · {user.confirmed ? 'email confirmed' : 'unconfirmed'} · {user.banned ? 'banned' : 'active'}</span>
                     </div>
                     <div className="dashboard-actions">
-                      {!user.confirmed && <span>Confirm email and enable MFA before promoting.</span>}
+                      {!user.confirmed && <span>Confirm email and verify MFA before granting Super Admin access.</span>}
                       {user.role === 'user'
-                        ? <button className="auth-secondary" type="button" disabled={busy || !user.confirmed} onClick={() => manageUser(user, 'promote')}>Promote</button>
-                        : <button className="auth-secondary" type="button" disabled={busy} onClick={() => manageUser(user, 'demote')}>Demote</button>}
+                        ? <button className="auth-secondary" type="button" disabled={busy || !user.confirmed} onClick={() => manageUser(user, 'promote')}>Grant Super Admin</button>
+                        : <button className="auth-secondary" type="button" disabled={busy} onClick={() => manageUser(user, 'demote')}>Remove Super Admin</button>}
                       {user.banned
                         ? <button className="auth-secondary" type="button" disabled={busy} onClick={() => manageUser(user, 'unban')}>Unban</button>
                         : <button className="account-delete-button" type="button" disabled={busy} onClick={() => manageUser(user, 'ban')}>Ban</button>}

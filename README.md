@@ -21,6 +21,8 @@ message and a small set of primary actions.
 - Account-protected support requests with an admin inbox and MCP-managed replies
 - Admin-controlled support availability indicator
 - Supabase username/password accounts, authenticator-app MFA, and password recovery
+- Dedicated `super_admin` role for all administration, guarded by verified TOTP
+- Idempotent Super Admin seeder that delegates password hashing to Supabase Auth
 - User dashboard for profiles, avatars, notification settings, posts, and
   platform announcements
 - MFA-protected admin dashboard for maintenance settings, support, accounts,
@@ -140,8 +142,8 @@ minimum-functionality requirements for web-content apps before submitting.
 
 The repository includes a local stdio MCP server. In addition to the read-only
 `check_github_pages_routes` tool, it checks Supabase storage, reads and updates
-the public website-status row, and can grant the admin role to an already
-confirmed account with verified TOTP MFA. Supabase is persistent storage; the
+the public website-status row, and can grant the `super_admin` role to an
+already confirmed account with verified TOTP MFA. Supabase is persistent storage; the
 MCP server is a trusted local management interface, not a hosted database.
 
 The route checker tests the site root, Terms, beta, account and admin URLs, plus
@@ -193,9 +195,35 @@ authenticator enrollment, verification, and removal. Dashboard routes redirect
 signed-out visitors to sign-in, then route trusted admin accounts to `/admin`
 and standard accounts to `/user`. The administrator login is at
 `/admin/login`; it accepts only a dedicated account granted the trusted
-Supabase `app_metadata.role = admin` claim and requires verified TOTP MFA.
-Credentials and password verification remain in Supabase Auth; the website
-never stores passwords or hard-codes administrator credentials.
+Supabase `app_metadata.role = super_admin` claim and requires verified TOTP
+MFA. All privileged UI routes, backend actions, and RLS policies require this
+role and a verified MFA session. Credentials and password verification remain
+in Supabase Auth; the website never stores passwords or hard-codes
+administrator credentials.
+
+After applying migrations, seed the initial Super Admin from a trusted local
+environment. The email defaults to `admin@yourdomain.com`; set
+`SUPER_ADMIN_EMAIL` to an address you control before running the seeder. Create
+a unique password of at least 16 characters, and supply it through the
+`SUPER_ADMIN_PASSWORD` environment variable—not source code, a committed file,
+or a GitHub Actions variable. Supabase Auth hashes passwords before storing
+them; the seeder never handles or writes password hashes itself.
+
+```powershell
+$env:SUPER_ADMIN_EMAIL = "admin@yourdomain.com"
+$securePassword = Read-Host "New Super Admin password" -AsSecureString
+$env:SUPER_ADMIN_PASSWORD = [System.Net.NetworkCredential]::new("", $securePassword).Password
+npm run seed:super-admin
+Remove-Item Env:SUPER_ADMIN_PASSWORD
+```
+
+Provide `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` only in this trusted
+local process. The script creates the confirmed account if absent, or assigns
+the role to the confirmed account if it exists. Re-running it does not change
+an existing password. New Super Admins must enroll and verify TOTP before
+opening `/admin`. The deployment workflow intentionally does not receive a
+service-role key or seed password; do not grant broad database credentials to
+the static-site deployment job.
 
 Username sign-in uses the `sign-in-with-username` Edge Function to resolve a
 username to its private Auth email and then delegates password verification to
@@ -294,26 +322,26 @@ Traffic data includes only visitors who opted in to analytics and is counted
 per visitor, page, and UTC day. Active-user tracking is not enabled. Since no
 independent uptime monitor is configured, the page reports uptime history as
 unavailable rather than estimating a percentage.
-`/user` and `/dashboard` require a signed-in non-admin user. `/admin` is
-restricted to administrators with a verified TOTP MFA session. Neither
+`/user` and `/dashboard` require a signed-in non-Super-Admin user. `/admin` is
+restricted to Super Admins with a verified TOTP MFA session. Neither
 dashboard is linked as a public page, and the router checks the session and
 role before rendering dashboard content.
 
-There is intentionally no default admin username or password. Create and
+There is intentionally no hard-coded administrator password. Use the secure
+Super Admin seeder described above for the initial account, or create and
 confirm a dedicated account at `/account`, enable and verify an authenticator,
 then call the MCP `grant_site_admin` tool with that exact email in both input
 fields. The tool verifies the account is email-confirmed and has verified TOTP
-before assigning the trusted `app_metadata` role. Record the account username
-and use its separate credentials at `/admin/login`. Sign out and back in after
-promotion so Supabase issues a fresh token, then open `/admin`.
+before assigning the trusted `super_admin` app_metadata role. Sign out and
+back in after promotion so Supabase issues a fresh token, then open `/admin`.
 
-Row-level security allows only an `admin` role in
-Supabase-managed `app_metadata` with an `aal2` (MFA-verified) session to update
-the content. The site never contains a service-role key. Do not grant the admin
-role through user-editable `user_metadata`.
+Row-level security and privileged endpoints allow only a `super_admin` role in
+Supabase-managed `app_metadata` with an `aal2` (MFA-verified) session to perform
+administrative actions. The site never contains a service-role key. Do not
+grant the role through user-editable `user_metadata`.
 
 Signed-in users can submit private support requests at `/support` and view
-administrator replies there. MFA-verified administrators can answer requests
+administrator replies there. MFA-verified Super Admins can answer requests
 from `/admin`; the admin MCP tools can also list requests and save replies from
 a trusted local server.
 The online/offline indicator is a manually managed availability status, not
@@ -448,8 +476,11 @@ index.html      Generated GitHub Pages entry point
 ```
 
 Run the frontend tests and production build with `npm test` and `npm run build`.
-The new platform migration and Edge Functions must still be deployed to the
-Supabase project; building the frontend does not apply or deploy them.
+The platform and Super Admin migrations and Edge Functions must still be
+deployed to the Supabase project; building the frontend does not apply or
+deploy them. Apply the Super Admin migration before seeding or using the
+administrator panel. The legacy `admin` role no longer grants administrator
+access.
 
 The Terms & Conditions content is general information, not legal advice.
 Review it with a qualified legal professional before relying on it.

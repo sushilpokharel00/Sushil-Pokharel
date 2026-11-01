@@ -22,7 +22,7 @@ function jsonResponse(status, value) {
   };
 }
 
-test('grants admin to a confirmed MFA account and preserves existing app metadata', async () => {
+test('grants Super Admin to a confirmed MFA account and preserves existing app metadata', async () => {
   const requests = [];
   const result = await grantSiteAdmin({
     email: 'ADMIN@example.com',
@@ -34,7 +34,7 @@ test('grants admin to a confirmed MFA account and preserves existing app metadat
         user: {
           id: verifiedAdminCandidate.id,
           email: verifiedAdminCandidate.email,
-          app_metadata: { provider: 'email', role: 'admin' },
+          app_metadata: { provider: 'email', role: 'super_admin' },
         },
       });
     }
@@ -45,10 +45,10 @@ test('grants admin to a confirmed MFA account and preserves existing app metadat
   assert.equal(requests[0].options.redirect, 'manual');
   assert.equal(requests[1].options.method, 'PUT');
   assert.deepEqual(JSON.parse(requests[1].options.body), {
-    app_metadata: { provider: 'email', role: 'admin' },
+    app_metadata: { provider: 'email', role: 'super_admin' },
   });
   assert.equal(result.updated, true);
-  assert.equal(result.role, 'admin');
+  assert.equal(result.role, 'super_admin');
   assert.equal(JSON.stringify(result).includes(config.serviceRoleKey), false);
 });
 
