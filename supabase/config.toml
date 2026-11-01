@@ -1,8 +1,8 @@
 project_id = "afbyphuozsdsajzngndq"
 
 [auth]
-site_url = "https://sushilpokharel.com.np"
-additional_redirect_urls = ["https://sushilpokharel.com.np/account"]
+site_url = "https://sushilpokhrel00.com.np"
+additional_redirect_urls = ["https://sushilpokhrel00.com.np/account"]
 
 [auth.email.template.confirmation]
 subject = "Confirm your email address"

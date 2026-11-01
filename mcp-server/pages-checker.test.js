@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { checkGithubPagesRoutes } from './pages-checker.js';
 
-const siteUrl = 'https://sushilpokharel.com.np/';
+const siteUrl = 'https://sushilpokhrel00.com.np/';
 const appShell = '<!doctype html><html><head><title>Site</title></head><body><div id="root"></div></body></html>';
 const github404 = '<html><head><title>Page not found &middot; GitHub Pages</title></head><body>Not found</body></html>';
 
@@ -112,7 +112,7 @@ test('rejects non-GitHub Pages URLs before making requests', async () => {
 
 test('rejects unconfigured subdomains of the official site', async () => {
   await assert.rejects(
-    checkGithubPagesRoutes({ siteUrl: 'https://other.sushilpokharel.com.np/' }, async () => {
+    checkGithubPagesRoutes({ siteUrl: 'https://other.sushilpokhrel00.com.np/' }, async () => {
       throw new Error('fetch must not be called');
     }),
     /HTTPS GitHub Pages URL or official site URL/,
@@ -121,7 +121,7 @@ test('rejects unconfigured subdomains of the official site', async () => {
 
 test('accepts the official www domain', async () => {
   const result = await checkGithubPagesRoutes(
-    { siteUrl: 'https://www.sushilpokharel.com.np/', routes: [] },
+    { siteUrl: 'https://www.sushilpokhrel00.com.np/', routes: [] },
     async (url) => response(String(url), 200, appShell),
   );
 

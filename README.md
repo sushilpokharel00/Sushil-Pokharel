@@ -67,7 +67,7 @@ npm run preview
 The generated site is written to `dist/`. Build output and installed
 dependencies are intentionally excluded from version control.
 
-Pushing to `main` builds and deploys the site at `https://sushilpokharel.com.np/` using
+Pushing to `main` builds and deploys the site at `https://sushilpokhrel00.com.np/` using
 `.github/workflows/deploy-pages.yml`. The workflow also publishes the built
 HTML, fallback `404.html`, and assets to the repository root for branch-based
 GitHub Pages hosting. The fallback serves the app shell for routes such as
@@ -88,7 +88,7 @@ admin text; arbitrary script injection is not allowed. The custom domain is conf
 Pages settings, not changed by a runtime dashboard.
 
 Each Pages deployment builds the Android APK, publishes it at
-`https://sushilpokharel.com.np/downloads/Sushil-Pokharel.apk`, and updates
+`https://sushilpokhrel00.com.np/downloads/Sushil-Pokharel.apk`, and updates
 the `android-download` GitHub Release.
 
 The browser uses both `favicon.svg` and `favicon.ico` for the shared portrait
@@ -100,15 +100,15 @@ automatically.
 
 ## Android
 
-The project is packaged as an Android app with Capacitor. The Android app loads
-the bundled local web assets directly from the APK, ensuring instant offline
-startup, zero-latency transitions between sections, and complete offline access
-to the Terms & Conditions. When connected to the internet, live updates and
-Supabase features (authentication, support tickets, dynamic status) sync
-automatically. External links open in the system browser and email drafts trigger
-the device's email client. The APK build workflow produces a standalone APK. The
-package ID is `com.sushilpokharel.terms`; choose the final ID before creating a
-Play Console listing because it cannot be changed for that listing later.
+The project is packaged as an Android app with Capacitor. The app opens the
+production site at `https://sushilpokhrel00.com.np/`, so account sessions,
+support requests, and live status use the same Supabase-backed services as the
+web application. An internet connection is required for the website and its
+Supabase features. External links open in the system browser and email drafts
+use the device's email client. The APK build workflow produces a standalone APK.
+The package ID is `com.sushilpokharel.terms`; choose the final ID before
+creating a Play Console listing because it cannot be changed for that listing
+later.
 
 Install Android Studio with JDK 21 and Android SDK platform 36, then build and
 sync the website into the native project:
@@ -148,7 +148,7 @@ MCP server is a trusted local management interface, not a hosted database.
 
 The route checker tests the site root, Terms, beta, account and admin URLs, plus
 a probe path that should render the app's not-found page. It only requests
-HTTPS GitHub Pages sites or the official `sushilpokharel.com.np` domain.
+HTTPS GitHub Pages sites or the official `sushilpokhrel00.com.np` domain.
 The live website status dashboard is available at `/status`; beta requests use
 the dedicated `/beta` route.
 
@@ -180,7 +180,7 @@ Example input for `check_github_pages_routes`:
 
 ```json
 {
-  "siteUrl": "https://sushilpokharel.com.np/",
+  "siteUrl": "https://sushilpokhrel00.com.np/",
   "routes": ["terms", "beta"]
 }
 ```
@@ -243,10 +243,10 @@ These public client configuration
 values are embedded in the generated website bundle; never use a Supabase
 service-role key in the browser or GitHub Pages.
 In **Authentication → URL Configuration**, set the Site URL to
-`https://sushilpokharel.com.np` and allow this exact redirect URL:
+`https://sushilpokhrel00.com.np` and allow this exact redirect URL:
 
 ```text
-https://sushilpokharel.com.np/account
+https://sushilpokhrel00.com.np/account
 ```
 
 The app sends signup confirmations and password-recovery links to that
@@ -343,7 +343,9 @@ grant the role through user-editable `user_metadata`.
 Signed-in users can submit private support requests at `/support` and view
 administrator replies there. MFA-verified Super Admins can answer requests
 from `/admin`; the admin MCP tools can also list requests and save replies from
-a trusted local server.
+a trusted local server. The web and Android app use the signed-in Supabase
+session with the same owner-scoped RLS policies; the service-role key is only
+used by the trusted local MCP server and is never shipped in the app.
 The online/offline indicator is a manually managed availability status, not
 real-time presence.
 Apply the support-request migration before using `/support` or the admin inbox.
