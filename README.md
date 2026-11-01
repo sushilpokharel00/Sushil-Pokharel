@@ -253,7 +253,9 @@ https://sushilpokharel00.com.np/reset-password
 
 The app sends signup confirmations to `/account` and password-recovery codes
 to `/reset-password` on the production site. The checked-in `supabase/config.toml`
-and templates configure the Supabase CLI's local stack only. For the hosted project, copy
+uses project-root-relative template paths (`./supabase/templates/...`) for
+Supabase CLI config pushes. The config and templates also configure the local
+stack only. For the hosted project, copy
 the confirmation, recovery, and password-changed templates from
 `supabase/templates/` into **Authentication → Email Templates**. The hosted
 Reset Password template must include `{{ .Token }}` so Supabase emails the

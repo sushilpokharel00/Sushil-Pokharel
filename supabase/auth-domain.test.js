@@ -20,13 +20,13 @@ test('Supabase Auth uses the official production site and explicit account redir
   assert.doesNotMatch(config, /https?:\/\/(?!sushilpokharel00\.com\.np)/i);
 });
 
-test('configured email template paths resolve relative to the Supabase directory', async () => {
+test('configured email template paths resolve relative to the repository root', async () => {
   for (const templatePath of config.matchAll(/content_path = "\.\/([^"]+)"/g)) {
-    await assert.doesNotReject(readFile(new URL(`supabase/${templatePath[1]}`, root)));
+    await assert.doesNotReject(readFile(new URL(templatePath[1], root)));
   }
-  assert.match(config, /content_path = "\.\/templates\/confirmation\.html"/);
-  assert.match(config, /content_path = "\.\/templates\/password-recovery\.html"/);
-  assert.match(config, /content_path = "\.\/templates\/password-changed-notification\.html"/);
+  assert.match(config, /content_path = "\.\/supabase\/templates\/confirmation\.html"/);
+  assert.match(config, /content_path = "\.\/supabase\/templates\/password-recovery\.html"/);
+  assert.match(config, /content_path = "\.\/supabase\/templates\/password-changed-notification\.html"/);
 });
 
 test('auth email templates use Supabase confirmation links and the production domain', () => {
