@@ -54,6 +54,7 @@ jobs:
           npm run build
           cp dist/app.html dist/index.html
           cp dist/index.html dist/404.html
+          cp ads.txt dist/ads.txt
           if [ -f CNAME ]; then cp CNAME dist/CNAME; fi
           git rm -r --ignore-unmatch assets
           mkdir -p assets
