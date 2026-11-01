@@ -1,6 +1,6 @@
 import { getPasswordPolicyError } from '../src/lib/password-policy.js';
 
-export const DEFAULT_SUPER_ADMIN_EMAIL = 'admin@yourdomain.com';
+export const DEFAULT_SUPER_ADMIN_EMAIL = 'admin@sushilpokharel00.com.np';
 const MAX_USERS = 5000;
 
 function getProjectUrl(value) {

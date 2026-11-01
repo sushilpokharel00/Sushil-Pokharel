@@ -202,7 +202,7 @@ in Supabase Auth; the website never stores passwords or hard-codes
 administrator credentials.
 
 After applying migrations, seed the initial Super Admin from a trusted local
-environment. The email defaults to `admin@yourdomain.com`; set
+environment. The email defaults to `admin@sushilpokharel00.com.np`; set
 `SUPER_ADMIN_EMAIL` to an address you control before running the seeder. Create
 a unique password of at least 16 characters, and supply it through the
 `SUPER_ADMIN_PASSWORD` environment variable—not source code, a committed file,
@@ -210,7 +210,7 @@ or a GitHub Actions variable. Supabase Auth hashes passwords before storing
 them; the seeder never handles or writes password hashes itself.
 
 ```powershell
-$env:SUPER_ADMIN_EMAIL = "admin@yourdomain.com"
+$env:SUPER_ADMIN_EMAIL = "admin@sushilpokharel00.com.np"
 $securePassword = Read-Host "New Super Admin password" -AsSecureString
 $env:SUPER_ADMIN_PASSWORD = [System.Net.NetworkCredential]::new("", $securePassword).Password
 npm run seed:super-admin
