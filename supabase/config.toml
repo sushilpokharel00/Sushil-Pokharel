@@ -6,16 +6,16 @@ additional_redirect_urls = ["https://sushilpokhrel00.com.np/account"]
 
 [auth.email.template.confirmation]
 subject = "Confirm your email address"
-content_path = "./supabase/templates/confirmation.html"
+content_path = "./templates/confirmation.html"
 
 [auth.email.template.recovery]
 subject = "Reset your password"
-content_path = "./supabase/templates/password-recovery.html"
+content_path = "./templates/password-recovery.html"
 
 [auth.email.notification.password_changed]
 enabled = true
 subject = "Your password was changed"
-content_path = "./supabase/templates/password-changed-notification.html"
+content_path = "./templates/password-changed-notification.html"
 
 [functions.newsletter]
 verify_jwt = false

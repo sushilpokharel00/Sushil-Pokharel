@@ -18,6 +18,15 @@ test('Supabase Auth uses only the production site and account redirect', () => {
   assert.doesNotMatch(config, /sushilpokharel\.com\.np|sushilpokharel00\.com\.np/i);
 });
 
+test('configured email template paths resolve relative to the Supabase directory', async () => {
+  for (const templatePath of config.matchAll(/content_path = "\.\/([^"]+)"/g)) {
+    await assert.doesNotReject(readFile(new URL(`supabase/${templatePath[1]}`, root)));
+  }
+  assert.match(config, /content_path = "\.\/templates\/confirmation\.html"/);
+  assert.match(config, /content_path = "\.\/templates\/password-recovery\.html"/);
+  assert.match(config, /content_path = "\.\/templates\/password-changed-notification\.html"/);
+});
+
 test('auth email templates use Supabase confirmation links and the production domain', () => {
   assert.match(confirmationTemplate, /href="\{\{ \.ConfirmationURL \}\}"/);
   assert.match(recoveryTemplate, /href="\{\{ \.ConfirmationURL \}\}"/);
