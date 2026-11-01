@@ -49,7 +49,7 @@ function setPageMetadata(title, description) {
   document.querySelector('meta[name="description"]')?.setAttribute('content', description);
   document.querySelector('link[rel="canonical"]')?.setAttribute(
     'href',
-    `https://sushilpokharel00.com.np${window.location.pathname}`,
+    `https://sushilpokharel.com.np${window.location.pathname}`,
   );
 }
 

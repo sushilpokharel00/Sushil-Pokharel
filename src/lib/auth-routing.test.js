@@ -28,8 +28,8 @@ test('only the trusted super-admin role opens the administrator dashboard', () =
 
 test('auth redirects use the configured origin and account path', () => {
   assert.equal(
-    getAuthRedirectUrl('/account', 'https://sushilpokharel00.com.np'),
-    'https://sushilpokharel00.com.np/account',
+    getAuthRedirectUrl('/account', 'https://sushilpokharel.com.np'),
+    'https://sushilpokharel.com.np/account',
   );
   assert.equal(getAuthRedirectUrl('/account', 'http://localhost:3000'), 'http://localhost:3000/account');
   assert.throws(() => getAuthRedirectUrl('/account', 'http://example.com'));

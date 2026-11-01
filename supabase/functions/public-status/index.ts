@@ -1,8 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const allowedOrigins = new Set([
-  'https://sushilpokharel00.com.np',
-  'https://www.sushilpokharel00.com.np',
+  'https://sushilpokharel.com.np',
+  'https://www.sushilpokharel.com.np',
   'http://localhost:3000',
   'http://127.0.0.1:3000',
   'http://localhost:5173',

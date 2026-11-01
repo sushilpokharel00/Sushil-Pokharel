@@ -67,7 +67,7 @@ npm run preview
 The generated site is written to `dist/`. Build output and installed
 dependencies are intentionally excluded from version control.
 
-Pushing to `main` builds and deploys the site at `https://sushilpokharel00.com.np/` using
+Pushing to `main` builds and deploys the site at `https://sushilpokharel.com.np/` using
 `.github/workflows/deploy-pages.yml`. The workflow also publishes the built
 HTML, fallback `404.html`, and assets to the repository root for branch-based
 GitHub Pages hosting. The fallback serves the app shell for routes such as
@@ -88,7 +88,7 @@ admin text; arbitrary script injection is not allowed. The custom domain is conf
 Pages settings, not changed by a runtime dashboard.
 
 Each Pages deployment builds the Android APK, publishes it at
-`https://sushilpokharel00.com.np/downloads/Sushil-Pokharel.apk`, and updates
+`https://sushilpokharel.com.np/downloads/Sushil-Pokharel.apk`, and updates
 the `android-download` GitHub Release.
 
 The browser uses both `favicon.svg` and `favicon.ico` for the shared portrait
@@ -148,7 +148,7 @@ MCP server is a trusted local management interface, not a hosted database.
 
 The route checker tests the site root, Terms, beta, account and admin URLs, plus
 a probe path that should render the app's not-found page. It only requests
-HTTPS GitHub Pages sites or the official `sushilpokharel00.com.np` domain.
+HTTPS GitHub Pages sites or the official `sushilpokharel.com.np` domain.
 The live website status dashboard is available at `/status`; beta requests use
 the dedicated `/beta` route.
 
@@ -180,7 +180,7 @@ Example input for `check_github_pages_routes`:
 
 ```json
 {
-  "siteUrl": "https://sushilpokharel00.com.np/",
+  "siteUrl": "https://sushilpokharel.com.np/",
   "routes": ["terms", "beta"]
 }
 ```
@@ -242,23 +242,21 @@ The client also accepts the older `VITE_SUPABASE_ANON_KEY` name as a fallback.
 These public client configuration
 values are embedded in the generated website bundle; never use a Supabase
 service-role key in the browser or GitHub Pages.
-Allow the account URLs in Supabase Auth URL Configuration:
+In **Authentication → URL Configuration**, set the Site URL to
+`https://sushilpokharel.com.np` and allow this exact redirect URL:
 
 ```text
-https://sushilpokharel00.com.np/account
-https://www.sushilpokharel00.com.np/account
-https://sushilpokharel00.com.np/account/security
-https://www.sushilpokharel00.com.np/account/security
-http://localhost:3000/account
+https://sushilpokharel.com.np/account
 ```
 
-Set the Supabase Auth Site URL to `https://sushilpokharel00.com.np` so recovery
-emails do not point at a stopped local server. The app sends sign-up and
-password-recovery links to that production origin by default. To test recovery
-locally, set `VITE_AUTH_REDIRECT_URL=http://localhost:3000` in `.env` and keep
-the local server running until you finish the email flow; add that exact account
-URL to Supabase's allowed redirect URLs. Recovery links sent to the app root
-are routed to the password form automatically.
+The app sends signup confirmations and password-recovery links to that
+production account URL. Do not add localhost redirects to the production
+project; use a separate development Supabase project if local email-flow
+testing is needed. The checked-in `supabase/config.toml` and templates
+configure the Supabase CLI's local stack only. For the hosted project, copy
+the confirmation, recovery, and password-changed templates from
+`supabase/templates/` into **Authentication → Email Templates**. Recovery
+links are routed to the password form automatically.
 
 For local website development, put the public project values in `.env` as
 shown in `.env.example`. The MCP service-role key is read only by the Node MCP
@@ -312,7 +310,9 @@ Editor. This includes the site settings and support tables, then
 `20261101003814_user_platform_and_content.sql` for profiles, posts,
 announcements, newsletter data, analytics, storage, triggers, and RLS, followed
 by `20261101010920_username_authentication.sql` for unique usernames and
-username-based authentication.
+username-based authentication, and `20261101160253_use_subscribers_table.sql`
+to preserve newsletter subscribers while renaming the private table to
+`subscribers`.
 Do not expose database service-role credentials to the browser.
 
 The `/` route reads its maintenance heading and message from `site_settings`.

@@ -1,8 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const allowedOrigins = new Set([
-  'https://sushilpokharel00.com.np',
-  'https://www.sushilpokharel00.com.np',
+  'https://sushilpokharel.com.np',
+  'https://www.sushilpokharel.com.np',
   'http://localhost:3000',
   'http://127.0.0.1:3000',
   'http://localhost:5173',
@@ -13,7 +13,7 @@ const allowedOrigins = new Set([
   'http://127.0.0.1:4174',
   'capacitor://localhost',
 ]);
-const siteOrigin = 'https://sushilpokharel00.com.np';
+const siteOrigin = 'https://sushilpokharel.com.np';
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function response(body: Record<string, unknown>, status: number, origin: string | null) {
@@ -163,7 +163,7 @@ Deno.serve(async (request: Request) => {
         if (typeof input.enabled !== 'boolean') return response({ error: 'enabled must be a boolean.' }, 400, origin);
         if (!input.enabled) {
           const now = new Date().toISOString();
-          const { error } = await admin.from('newsletter_subscribers')
+          const { error } = await admin.from('subscribers')
             .update({ status: 'unsubscribed', unsubscribed_at: now, updated_at: now })
             .eq('user_id', userId);
           if (error) throw error;
@@ -181,7 +181,7 @@ Deno.serve(async (request: Request) => {
 
       if (!emailPattern.test(email) || email.length > 254) return response({ error: 'Enter a valid email address.' }, 400, origin);
       const { data: existing, error: lookupError } = await admin
-        .from('newsletter_subscribers')
+        .from('subscribers')
         .select('id, status, user_id, updated_at')
         .eq('email', email)
         .maybeSingle();
@@ -192,7 +192,7 @@ Deno.serve(async (request: Request) => {
       if (existing?.status === 'subscribed') {
         if (userId) {
           if (!existing.user_id) {
-            const { error } = await admin.from('newsletter_subscribers')
+            const { error } = await admin.from('subscribers')
               .update({ user_id: userId, updated_at: new Date().toISOString() })
               .eq('id', existing.id);
             if (error) throw error;
@@ -215,7 +215,7 @@ Deno.serve(async (request: Request) => {
         kind: 'confirm',
         exp: Date.now() + 24 * 60 * 60 * 1000,
       }, tokenSecret);
-      const { error: saveError } = await admin.from('newsletter_subscribers').upsert({
+      const { error: saveError } = await admin.from('subscribers').upsert({
         id: subscriberId,
         user_id: userId ?? existing?.user_id ?? null,
         email,
@@ -245,7 +245,7 @@ Deno.serve(async (request: Request) => {
         return response({ error: 'This link is invalid or expired.' }, 400, origin);
       }
 
-      const { data: subscriber, error: lookupError } = await admin.from('newsletter_subscribers')
+      const { data: subscriber, error: lookupError } = await admin.from('subscribers')
         .select('id, user_id, status, confirmation_token_hash, token_expires_at')
         .eq('id', payload.id)
         .eq('email', payload.email)
@@ -258,7 +258,7 @@ Deno.serve(async (request: Request) => {
           !subscriber.token_expires_at || new Date(subscriber.token_expires_at).getTime() < Date.now()) {
           return response({ error: 'This link is invalid or expired.' }, 400, origin);
         }
-        const { error } = await admin.from('newsletter_subscribers').update({
+        const { error } = await admin.from('subscribers').update({
           status: 'subscribed',
           confirmed_at: new Date().toISOString(),
           confirmation_token_hash: null,
@@ -276,7 +276,7 @@ Deno.serve(async (request: Request) => {
       }
 
       const now = new Date().toISOString();
-      const { error } = await admin.from('newsletter_subscribers').update({
+      const { error } = await admin.from('subscribers').update({
         status: 'unsubscribed',
         unsubscribed_at: now,
         updated_at: now,

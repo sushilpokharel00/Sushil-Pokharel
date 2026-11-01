@@ -1,8 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const allowedOrigins = new Set([
-  'https://sushilpokharel00.com.np',
-  'https://www.sushilpokharel00.com.np',
+  'https://sushilpokharel.com.np',
+  'https://www.sushilpokharel.com.np',
   'http://localhost:3000',
   'http://127.0.0.1:3000',
   'http://localhost:5173',
@@ -13,7 +13,7 @@ const allowedOrigins = new Set([
   'http://127.0.0.1:4174',
   'capacitor://localhost',
 ]);
-const siteOrigin = 'https://sushilpokharel00.com.np';
+const siteOrigin = 'https://sushilpokharel.com.np';
 
 function jsonResponse(body: Record<string, unknown>, status: number, origin: string | null) {
   const headers = new Headers({
@@ -114,7 +114,7 @@ async function sendNewsletter(
   }
 
   const { data: subscribers, error: subscriberError } = await adminClient
-    .from('newsletter_subscribers')
+    .from('subscribers')
     .select('id, email')
     .eq('status', 'subscribed')
     .order('created_at', { ascending: true })
@@ -226,7 +226,7 @@ Deno.serve(async (request: Request) => {
         listAllUsers(adminClient),
         adminClient.from('user_posts').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
         adminClient.from('user_posts').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
-        adminClient.from('newsletter_subscribers').select('id', { count: 'exact', head: true }).eq('status', 'subscribed'),
+        adminClient.from('subscribers').select('id', { count: 'exact', head: true }).eq('status', 'subscribed'),
         adminClient.from('page_views').select('id', { count: 'exact', head: true })
           .gte('viewed_on', new Date(Date.now() - 29 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)),
         adminClient.from('page_views').select('visitor_hash, viewed_on')

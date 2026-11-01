@@ -1,7 +1,7 @@
 const githubPagesDomain = '.github.io';
 const officialSiteHosts = new Set([
-  'sushilpokharel00.com.np',
-  'www.sushilpokharel00.com.np',
+  'sushilpokharel.com.np',
+  'www.sushilpokharel.com.np',
 ]);
 const requestTimeoutMs = 10_000;
 

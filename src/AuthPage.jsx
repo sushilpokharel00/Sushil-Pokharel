@@ -11,7 +11,7 @@ import { getPasswordPolicyError } from './lib/password-policy.js';
 import { sitePath } from './site-path.js';
 
 const authRedirectOrigin = import.meta.env.VITE_AUTH_REDIRECT_URL?.trim()
-  || 'https://sushilpokharel00.com.np';
+  || 'https://sushilpokharel.com.np';
 
 function setPageMetadata(title, description) {
   document.title = title;

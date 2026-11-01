@@ -63,8 +63,8 @@ export function configureNativeApp() {
     const url = new URL(link.href, window.location.href);
     const isInternalDomain =
       url.origin === window.location.origin ||
-      url.hostname === 'sushilpokharel00.com.np' ||
-      url.hostname === 'www.sushilpokharel00.com.np' ||
+      url.hostname === 'sushilpokharel.com.np' ||
+      url.hostname === 'www.sushilpokharel.com.np' ||
       url.hostname === 'localhost' ||
       url.hostname === '127.0.0.1';
 
