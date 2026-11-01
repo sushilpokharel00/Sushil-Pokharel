@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { checkGithubPagesRoutes } from './pages-checker.js';
 
-const siteUrl = 'https://sushilpokhrel00.com.np/';
+const siteUrl = 'https://sushilpokharel00.com.np/';
 const appShell = '<!doctype html><html><head><title>Site</title></head><body><div id="root"></div></body></html>';
 const github404 = '<html><head><title>Page not found &middot; GitHub Pages</title></head><body>Not found</body></html>';
 
@@ -43,6 +43,21 @@ test('checks the unknown-route fallback and expects the app 404 page', async () 
 test('labels the account route for the sign-in and security UI', async () => {
   const result = await checkGithubPagesRoutes(
     { siteUrl, routes: ['account'] },
+    async (url) => {
+      const href = String(url);
+      return href.endsWith('/')
+        ? response(href, 200, appShell)
+        : response(href, 404, appShell);
+    },
+  );
+
+  assert.equal(result.routes[0].expectedClientPage, 'account');
+  assert.equal(result.routes[0].result, 'spa-fallback');
+});
+
+test('labels the password reset route for the account recovery UI', async () => {
+  const result = await checkGithubPagesRoutes(
+    { siteUrl, routes: ['reset-password'] },
     async (url) => {
       const href = String(url);
       return href.endsWith('/')
@@ -103,7 +118,7 @@ test('identifies GitHub Pages generic 404 pages and recommends publishing the fa
 
 test('rejects non-GitHub Pages URLs before making requests', async () => {
   await assert.rejects(
-    checkGithubPagesRoutes({ siteUrl: 'http://localhost:3000/' }, async () => {
+    checkGithubPagesRoutes({ siteUrl: 'http://example.test/' }, async () => {
       throw new Error('fetch must not be called');
     }),
     /HTTPS GitHub Pages URL or official site URL/,
@@ -112,16 +127,16 @@ test('rejects non-GitHub Pages URLs before making requests', async () => {
 
 test('rejects unconfigured subdomains of the official site', async () => {
   await assert.rejects(
-    checkGithubPagesRoutes({ siteUrl: 'https://other.sushilpokhrel00.com.np/' }, async () => {
+    checkGithubPagesRoutes({ siteUrl: 'https://other.sushilpokharel00.com.np/' }, async () => {
       throw new Error('fetch must not be called');
     }),
     /HTTPS GitHub Pages URL or official site URL/,
   );
 });
 
-test('accepts the official www domain', async () => {
+test('accepts the official domain', async () => {
   const result = await checkGithubPagesRoutes(
-    { siteUrl: 'https://www.sushilpokhrel00.com.np/', routes: [] },
+    { siteUrl: 'https://sushilpokharel00.com.np/', routes: [] },
     async (url) => response(String(url), 200, appShell),
   );
 

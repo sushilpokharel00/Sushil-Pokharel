@@ -11,7 +11,7 @@ import { getPasswordPolicyError } from './lib/password-policy.js';
 import { sitePath } from './site-path.js';
 
 const authRedirectOrigin = import.meta.env.VITE_AUTH_REDIRECT_URL?.trim()
-  || 'https://sushilpokhrel00.com.np';
+  || 'https://sushilpokharel00.com.np';
 
 function setPageMetadata(title, description) {
   document.title = title;
@@ -267,7 +267,7 @@ export default function AuthPage({ isAccountPage = false, isAdminPage = false })
     event.preventDefault();
     await runAction(
       () => supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: getAuthRedirectUrl(sitePath('/account'), authRedirectOrigin),
+        redirectTo: getAuthRedirectUrl(sitePath('/reset-password'), authRedirectOrigin),
       }),
       () => setNotice({ kind: 'success', text: 'If an account exists for that email, a password reset link is on its way.' }),
     );

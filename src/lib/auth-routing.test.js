@@ -26,14 +26,14 @@ test('only the trusted super-admin role opens the administrator dashboard', () =
   assert.equal(getDashboardPath(undefined), '/user');
 });
 
-test('auth redirects use the configured origin and account path', () => {
+test('auth redirects use only the official production origin', () => {
   assert.equal(
-    getAuthRedirectUrl('/account', 'https://sushilpokhrel00.com.np'),
-    'https://sushilpokhrel00.com.np/account',
+    getAuthRedirectUrl('/reset-password', 'https://sushilpokharel00.com.np'),
+    'https://sushilpokharel00.com.np/reset-password',
   );
-  assert.equal(getAuthRedirectUrl('/account', 'http://localhost:3000'), 'http://localhost:3000/account');
-  assert.throws(() => getAuthRedirectUrl('/account', 'http://example.com'));
-  assert.throws(() => getAuthRedirectUrl('/account', 'https://example.com/path'));
+  assert.throws(() => getAuthRedirectUrl('/reset-password', 'http://example.test'));
+  assert.throws(() => getAuthRedirectUrl('/reset-password', 'https://example.com'));
+  assert.throws(() => getAuthRedirectUrl('/reset-password', 'https://sushilpokharel00.com.np/path'));
 });
 
 test('password recovery links are detected in the hash or query string', () => {

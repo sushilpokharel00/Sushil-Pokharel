@@ -32,16 +32,15 @@ function validateConfiguration(urlValue, key) {
     return 'VITE_SUPABASE_URL must be a valid Supabase project URL.';
   }
 
-  const isLocalHttp = url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname);
   if (
-    (url.protocol !== 'https:' && !isLocalHttp) ||
+    url.protocol !== 'https:' ||
     url.username ||
     url.password ||
     url.pathname !== '/' ||
     url.search ||
     url.hash
   ) {
-    return 'VITE_SUPABASE_URL must be an HTTPS Supabase project URL (HTTP is allowed for localhost development).';
+    return 'VITE_SUPABASE_URL must be an HTTPS Supabase project URL.';
   }
 
   if (isServiceRoleKey(key)) {

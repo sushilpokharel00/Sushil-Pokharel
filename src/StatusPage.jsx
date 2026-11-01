@@ -35,7 +35,7 @@ export default function StatusPage({ Header, Footer }) {
     );
     document.querySelector('link[rel="canonical"]')?.setAttribute(
       'href',
-      'https://sushilpokhrel00.com.np/status',
+      'https://sushilpokharel00.com.np/status',
     );
   }, []);
 

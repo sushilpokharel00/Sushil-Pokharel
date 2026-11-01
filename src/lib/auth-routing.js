@@ -24,19 +24,18 @@ export function getAuthRedirectUrl(path, origin) {
   try {
     url = new URL(origin);
   } catch {
-    throw new Error('VITE_AUTH_REDIRECT_URL must be a valid HTTPS origin (HTTP is allowed for localhost development).');
+    throw new Error('VITE_AUTH_REDIRECT_URL must be the official HTTPS site origin.');
   }
 
-  const isLocalHttp = url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname);
   if (
-    (url.protocol !== 'https:' && !isLocalHttp) ||
+    url.origin !== 'https://sushilpokharel00.com.np' ||
     url.username ||
     url.password ||
     url.pathname !== '/' ||
     url.search ||
     url.hash
   ) {
-    throw new Error('VITE_AUTH_REDIRECT_URL must be an HTTPS origin (HTTP is allowed for localhost development).');
+    throw new Error('VITE_AUTH_REDIRECT_URL must be https://sushilpokharel00.com.np.');
   }
 
   return new URL(path, url.origin).toString();

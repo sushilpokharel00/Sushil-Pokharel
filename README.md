@@ -51,7 +51,7 @@ npm ci
 npm run dev
 ```
 
-Open `http://localhost:3000` after Vite starts.
+Open the development URL printed by Vite after it starts.
 If PowerShell blocks `npm.ps1` because of its execution policy, use
 `npm.cmd ci` and `npm.cmd run dev` instead.
 
@@ -67,12 +67,12 @@ npm run preview
 The generated site is written to `dist/`. Build output and installed
 dependencies are intentionally excluded from version control.
 
-Pushing to `main` builds and deploys the site at `https://sushilpokhrel00.com.np/` using
+Pushing to `main` builds and deploys the site at `https://sushilpokharel00.com.np/` using
 `.github/workflows/deploy-pages.yml`. The workflow also publishes the built
 HTML, fallback `404.html`, and assets to the repository root for branch-based
 GitHub Pages hosting. The fallback serves the app shell for routes such as
 `/terms`, `/privacy`, `/disclaimer`, `/contact`, `/app`, `/status`, `/beta`,
-`/account/security`, `/admin/login`, `/user`, and `/posts`, which the client-side router then
+`/account/security`, `/reset-password`, `/admin/login`, `/user`, and `/posts`, which the client-side router then
 renders. `app.html` is the Vite source template; the
 root `index.html` and `404.html` are generated deployment output.
 
@@ -88,7 +88,7 @@ admin text; arbitrary script injection is not allowed. The custom domain is conf
 Pages settings, not changed by a runtime dashboard.
 
 Each Pages deployment builds the Android APK, publishes it at
-`https://sushilpokhrel00.com.np/downloads/Sushil-Pokharel.apk`, and updates
+`https://sushilpokharel00.com.np/downloads/Sushil-Pokharel.apk`, and updates
 the `android-download` GitHub Release.
 
 The browser uses both `favicon.svg` and `favicon.ico` for the shared portrait
@@ -101,7 +101,7 @@ automatically.
 ## Android
 
 The project is packaged as an Android app with Capacitor. The app opens the
-production site at `https://sushilpokhrel00.com.np/`, so account sessions,
+production site at `https://sushilpokharel00.com.np/`, so account sessions,
 support requests, and live status use the same Supabase-backed services as the
 web application. An internet connection is required for the website and its
 Supabase features. External links open in the system browser and email drafts
@@ -148,7 +148,7 @@ MCP server is a trusted local management interface, not a hosted database.
 
 The route checker tests the site root, Terms, beta, account and admin URLs, plus
 a probe path that should render the app's not-found page. It only requests
-HTTPS GitHub Pages sites or the official `sushilpokhrel00.com.np` domain.
+HTTPS GitHub Pages sites or the official `sushilpokharel00.com.np` domain.
 The live website status dashboard is available at `/status`; beta requests use
 the dedicated `/beta` route.
 
@@ -180,7 +180,7 @@ Example input for `check_github_pages_routes`:
 
 ```json
 {
-  "siteUrl": "https://sushilpokhrel00.com.np/",
+  "siteUrl": "https://sushilpokharel00.com.np/",
   "routes": ["terms", "beta"]
 }
 ```
@@ -243,20 +243,19 @@ These public client configuration
 values are embedded in the generated website bundle; never use a Supabase
 service-role key in the browser or GitHub Pages.
 In **Authentication → URL Configuration**, set the Site URL to
-`https://sushilpokhrel00.com.np` and allow this exact redirect URL:
+`https://sushilpokharel00.com.np` and allow these exact redirect URLs:
 
 ```text
-https://sushilpokhrel00.com.np/account
+https://sushilpokharel00.com.np/account
+https://sushilpokharel00.com.np/reset-password
 ```
 
-The app sends signup confirmations and password-recovery links to that
-production account URL. Do not add localhost redirects to the production
-project; use a separate development Supabase project if local email-flow
-testing is needed. The checked-in `supabase/config.toml` and templates
-configure the Supabase CLI's local stack only. For the hosted project, copy
+The app sends signup confirmations to `/account` and password-recovery links
+to `/reset-password` on the production site. The checked-in `supabase/config.toml`
+and templates configure the Supabase CLI's local stack only. For the hosted project, copy
 the confirmation, recovery, and password-changed templates from
 `supabase/templates/` into **Authentication → Email Templates**. Recovery
-links are routed to the password form automatically.
+links open the dedicated password form at `/reset-password`.
 
 For local website development, put the public project values in `.env` as
 shown in `.env.example`. The MCP service-role key is read only by the Node MCP

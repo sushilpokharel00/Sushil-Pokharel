@@ -49,7 +49,7 @@ function setPageMetadata(title, description) {
   document.querySelector('meta[name="description"]')?.setAttribute('content', description);
   document.querySelector('link[rel="canonical"]')?.setAttribute(
     'href',
-    `https://sushilpokhrel00.com.np${window.location.pathname}`,
+    `https://sushilpokharel00.com.np${window.location.pathname}`,
   );
 }
 
@@ -86,7 +86,7 @@ function Header({ currentPath }) {
         <nav className="header-nav" aria-label="Main navigation">
           <a href={sitePath('/')} aria-current={pathname === '/' ? 'page' : undefined}>Home</a>
           <a href={sitePath('/status')} aria-current={pathname === '/status' ? 'page' : undefined}>Status</a>
-          <a href={sitePath('/account')} aria-current={pathname === '/account' || pathname === '/login' || pathname === '/account/security' ? 'page' : undefined}>
+          <a href={sitePath('/account')} aria-current={pathname === '/account' || pathname === '/login' || pathname === '/account/security' || pathname === '/reset-password' ? 'page' : undefined}>
             Sign in
           </a>
           <a
@@ -101,7 +101,7 @@ function Header({ currentPath }) {
 }
 
 function getPagePathname() {
-  if (isPasswordRecoveryUrl(window.location)) return '/account';
+  if (isPasswordRecoveryUrl(window.location)) return '/reset-password';
 
   const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
   const basePath = import.meta.env.BASE_URL.replace(/\/+$/, '');
@@ -1280,7 +1280,7 @@ export default function App() {
         <Footer />
       </>
     );
-  } else if (pathname === '/account' || pathname === '/login' || pathname === '/account/security') {
+  } else if (pathname === '/account' || pathname === '/login' || pathname === '/account/security' || pathname === '/reset-password') {
     pageContent = (
       <>
         <Header currentPath={pathname} />

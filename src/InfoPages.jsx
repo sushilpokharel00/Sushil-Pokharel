@@ -4,7 +4,7 @@ import { supabase } from './lib/supabase.js';
 import { sitePath } from './site-path.js';
 
 const contactEmail = 'pokharelsushil242@googlemail.com';
-const siteOrigin = 'https://sushilpokhrel00.com.np';
+const siteOrigin = 'https://sushilpokharel00.com.np';
 
 function setPageMetadata(title, description, path) {
   document.title = title;
@@ -70,7 +70,7 @@ export function PrivacyPage({ Header, Footer }) {
     >
       <p>
         This Privacy Policy explains how Sushil Pokharel (“I,” “me,” or “my”)
-        handles information when you visit sushilpokhrel00.com.np, use its
+        handles information when you visit sushilpokharel00.com.np, use its
         account and support features, or download the Android app. It should be
         read with the <a href={sitePath('/terms')}>Terms &amp; Conditions</a>.
       </p>

@@ -1,7 +1,6 @@
 const githubPagesDomain = '.github.io';
 const officialSiteHosts = new Set([
-  'sushilpokhrel00.com.np',
-  'www.sushilpokhrel00.com.np',
+  'sushilpokharel00.com.np',
 ]);
 const requestTimeoutMs = 10_000;
 
@@ -65,7 +64,7 @@ function expectedClientPage(route) {
   if (!route) return 'home';
   if (route === 'terms') return 'terms';
   if (route === 'beta') return 'beta-request';
-  if (route === 'account' || route === 'login') return 'account';
+  if (route === 'account' || route === 'login' || route === 'reset-password') return 'account';
   if (route === 'admin') return 'admin';
   if (route === 'user' || route === 'dashboard') return 'user-dashboard';
   if (route === 'privacy' || route === 'privacy-policy') return 'privacy';
@@ -114,6 +113,7 @@ export async function checkGithubPagesRoutes(
     'newsletter',
     'beta',
     'account',
+    'reset-password',
     'admin',
     '__mcp_not_found_probe__',
   ] },

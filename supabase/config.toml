@@ -1,8 +1,11 @@
 project_id = "afbyphuozsdsajzngndq"
 
 [auth]
-site_url = "https://sushilpokhrel00.com.np"
-additional_redirect_urls = ["https://sushilpokhrel00.com.np/account"]
+site_url = "https://sushilpokharel00.com.np"
+additional_redirect_urls = [
+  "https://sushilpokharel00.com.np/account",
+  "https://sushilpokharel00.com.np/reset-password",
+]
 
 [auth.email.template.confirmation]
 subject = "Confirm your email address"

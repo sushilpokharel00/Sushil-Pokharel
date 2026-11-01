@@ -63,10 +63,7 @@ export function configureNativeApp() {
     const url = new URL(link.href, window.location.href);
     const isInternalDomain =
       url.origin === window.location.origin ||
-      url.hostname === 'sushilpokhrel00.com.np' ||
-      url.hostname === 'www.sushilpokhrel00.com.np' ||
-      url.hostname === 'localhost' ||
-      url.hostname === '127.0.0.1';
+      url.hostname === 'sushilpokharel00.com.np';
 
     if (!isInternalDomain) {
       if (Capacitor.isNativePlatform() || link.target === '_blank') {
