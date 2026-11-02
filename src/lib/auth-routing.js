@@ -10,7 +10,7 @@ export function getUsernameError(username) {
 }
 
 export function getDashboardPath(role) {
-  return role === 'super_admin' ? '/admin' : '/user';
+  return role === 'super_admin' ? '/admin/dashboard' : '/user/dashboard';
 }
 
 function hasRecoveryType(location) {

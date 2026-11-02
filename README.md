@@ -23,11 +23,11 @@ message and a small set of primary actions.
 - Supabase username/password accounts, authenticator-app MFA, and password recovery
 - Dedicated `super_admin` role for all administration, guarded by verified TOTP
 - Idempotent Super Admin seeder that delegates password hashing to Supabase Auth
-- User dashboard for profiles, avatars, notification settings, posts, and
-  platform announcements
-- MFA-protected admin dashboard for maintenance settings, support, accounts,
-  home-page metadata, post moderation, announcements, newsletter campaigns, and
-  traffic summaries
+- User dashboard with profile management, category-tagged post drafts,
+  private featured-image uploads, submission status, and personal activity metrics
+- MFA-protected admin dashboard with live/maintenance/offline controls, support,
+  user management, content editing and moderation, real-time audit events,
+  announcements, newsletter campaigns, and privacy-preserving traffic summaries
 - Responsive footer navigation for contact, policies, account, support, beta
   access, app information, and newsletter signup
 - Double-opt-in newsletter subscriptions and Resend delivery through Supabase
@@ -315,9 +315,12 @@ Editor. This includes the site settings and support tables, then
 `20261101003814_user_platform_and_content.sql` for profiles, posts,
 announcements, newsletter data, analytics, storage, triggers, and RLS, followed
 by `20261101010920_username_authentication.sql` for unique usernames and
-username-based authentication, and `20261101160253_use_subscribers_table.sql`
-to preserve newsletter subscribers while renaming the private table to
-`subscribers`.
+username-based authentication, `20261101022343_super_admin_security.sql` for
+Super Admin-only policies, and `20261101160253_use_subscribers_table.sql` to
+preserve newsletter subscribers while renaming the private table to
+`subscribers`. Apply `20261102005646_dashboard_content_and_site_modes.sql` for
+post categories, private featured-image storage, live site modes, and the MFA-
+restricted administrator audit log.
 Do not expose database service-role credentials to the browser.
 
 The `/` route reads its maintenance heading and message from `site_settings`.
@@ -327,8 +330,11 @@ Traffic data includes only visitors who opted in to analytics and is counted
 per visitor, page, and UTC day. Active-user tracking is not enabled. Since no
 independent uptime monitor is configured, the page reports uptime history as
 unavailable rather than estimating a percentage.
-`/user` and `/dashboard` require a signed-in non-Super-Admin user. `/admin` is
-restricted to Super Admins with a verified TOTP MFA session. Neither
+`/user/dashboard`, `/user`, and `/dashboard` require a signed-in non-Super-Admin
+user. `/admin/dashboard` and `/admin` are restricted to Super Admins with a
+verified TOTP MFA session. Public routes show the maintenance/offline screen
+when the admin switches the site away from Live; administrator routes remain
+available. Neither
 dashboard is linked as a public page, and the router checks the session and
 role before rendering dashboard content.
 

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import { configureNativeApp } from './native-app.js';
 import './styles.css';
+import './dashboard.css';
 
 configureNativeApp();
 

@@ -585,7 +585,7 @@ export function PublicPostsPage({ Header, Footer }) {
     }
     let active = true;
     supabase.from('user_posts')
-      .select('id, title, content, featured, updated_at')
+      .select('id, title, content, category, featured, updated_at')
       .eq('status', 'approved')
       .order('featured', { ascending: false })
       .order('updated_at', { ascending: false })
@@ -621,6 +621,7 @@ export function PublicPostsPage({ Header, Footer }) {
       {posts.map((post) => (
         <PolicySection key={post.id} title={post.title}>
           {post.featured && <p className="post-featured-label">Featured post</p>}
+          {post.category && <p className="post-category-label">{post.category}</p>}
           <p className="public-post-content">{post.content}</p>
           <p className="info-updated">Updated {new Date(post.updated_at).toLocaleDateString()}</p>
         </PolicySection>

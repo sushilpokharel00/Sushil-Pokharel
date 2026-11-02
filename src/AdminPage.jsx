@@ -4,6 +4,7 @@ import { sitePath } from './site-path.js';
 import AdminPlatformPanel from './AdminPlatformPanel.jsx';
 
 const defaultSettings = {
+  site_status: 'maintenance',
   is_maintenance: true,
   maintenance_title: 'We’re making improvements.',
   maintenance_message: 'The website is temporarily under maintenance while we work on updates. There’s no confirmed reopening date yet. In the meantime, contact Sushil or request beta access.',
@@ -81,7 +82,7 @@ export default function AdminPage() {
 
       const { data, error } = await supabase
         .from('site_settings')
-        .select('is_maintenance, maintenance_title, maintenance_message, support_online, site_name, site_description, updated_at')
+        .select('site_status, is_maintenance, maintenance_title, maintenance_message, support_online, site_name, site_description, updated_at')
         .eq('id', 1)
         .single();
       if (error) throw error;
@@ -114,7 +115,8 @@ export default function AdminPage() {
       const { data, error } = await supabase
         .from('site_settings')
         .update({
-          is_maintenance: settings.is_maintenance,
+          site_status: settings.site_status,
+          is_maintenance: settings.site_status === 'maintenance',
           maintenance_title: settings.maintenance_title.trim(),
           maintenance_message: settings.maintenance_message.trim(),
           support_online: settings.support_online,
@@ -122,7 +124,7 @@ export default function AdminPage() {
           site_description: settings.site_description.trim(),
         })
         .eq('id', 1)
-        .select('is_maintenance, maintenance_title, maintenance_message, support_online, site_name, site_description, updated_at')
+        .select('site_status, is_maintenance, maintenance_title, maintenance_message, support_online, site_name, site_description, updated_at')
         .single();
       if (error) throw error;
       setSettings(data);
@@ -205,20 +207,49 @@ export default function AdminPage() {
       </>
     );
   } else if (access === 'ready') {
+    const siteModes = [
+      { value: 'live', label: 'Live', detail: 'Public pages are available.' },
+      { value: 'maintenance', label: 'Maintenance', detail: 'Public visitors see the maintenance screen.' },
+      { value: 'offline', label: 'Offline', detail: 'Public access is paused for an emergency.' },
+    ];
     content = (
-      <>
-        <span className="auth-eyebrow">SITE ADMINISTRATION</span>
-        <h1>Website status</h1>
-        <p className="auth-description">Edit the public home-page status and search metadata. AdSense scripts and the custom domain remain controlled by reviewed deployment files.</p>
+      <div className="admin-console-layout">
+        <nav className="admin-console-nav" aria-label="Administrator sections">
+          <a href="#admin-site-mode-title">Website controls</a>
+          <a href="#admin-support-title">Support inbox</a>
+          <a href="#admin-platform-title">Platform overview</a>
+          <a href="#admin-user-management-title">User accounts</a>
+          <a href="#admin-post-review-title">Post moderation</a>
+          <a href="#admin-audit-title">Security log</a>
+          <a href="#admin-announcements-title">Announcements</a>
+        </nav>
+        <div className="admin-console-content">
+          <span className="auth-eyebrow">SITE ADMINISTRATION</span>
+          <h1 id="admin-site-mode-title">Website status</h1>
+          <p className="auth-description">Edit the public home-page status and search metadata. AdSense scripts and the custom domain remain controlled by reviewed deployment files.</p>
         <form className="auth-form" onSubmit={handleSave}>
-          <label className="admin-checkbox">
-            <input
-              type="checkbox"
-              checked={settings.is_maintenance}
-              onChange={(event) => setSettings((current) => ({ ...current, is_maintenance: event.target.checked }))}
-            />
-            <span>Website is under maintenance</span>
-          </label>
+          <fieldset className="site-mode-picker">
+            <legend>Public website mode</legend>
+            <div className="site-mode-options">
+              {siteModes.map((mode) => (
+                <label className={`site-mode-option site-mode-${mode.value}`} key={mode.value}>
+                  <input
+                    type="radio"
+                    name="site-status"
+                    value={mode.value}
+                    checked={settings.site_status === mode.value}
+                    onChange={() => setSettings((current) => ({
+                      ...current,
+                      site_status: mode.value,
+                      is_maintenance: mode.value === 'maintenance',
+                    }))}
+                  />
+                  <span className="site-mode-indicator" aria-hidden="true" />
+                  <span className="site-mode-copy"><strong>{mode.label}</strong><small>{mode.detail}</small></span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <label className="admin-checkbox">
             <input
               type="checkbox"
@@ -326,7 +357,8 @@ export default function AdminPage() {
           )}
         </section>
         <AdminPlatformPanel />
-      </>
+        </div>
+      </div>
     );
   } else {
     content = (
@@ -338,8 +370,8 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="auth-page">
-      <section className="auth-card" aria-live="polite">
+    <main className="auth-page admin-console-page">
+      <section className="auth-card admin-console-card" aria-live="polite">
         {notice && <p className={`auth-notice ${notice.kind}`} role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.text}</p>}
         {content}
         <a className="auth-home-link" href={sitePath('/')}>Return to website</a>

@@ -85,6 +85,30 @@ async function listAllUsers(adminClient: ReturnType<typeof createClient>) {
   throw new Error('User directory exceeds the 5,000-account management limit.');
 }
 
+async function auditAdminAction(
+  adminClient: ReturnType<typeof createClient>,
+  actorId: string,
+  action: string,
+  resourceType: string,
+  resourceId?: string,
+) {
+  const { error } = await adminClient.from('admin_audit_log').insert({
+    actor_id: actorId,
+    action,
+    resource_type: resourceType,
+    resource_id: resourceId ?? null,
+  });
+  if (error) {
+    console.error('Could not write an administrator audit event.', error);
+    return false;
+  }
+  return true;
+}
+
+function auditWarning(audited: boolean) {
+  return audited ? undefined : 'The action completed, but its audit event could not be saved. Check the Supabase logs.';
+}
+
 function emailShell(subject: string, body: string, unsubscribeUrl: string) {
   return `<!doctype html><html><body style="margin:0;background:#f4f6f5;font-family:Arial,sans-serif;color:#24312b"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px"><tr><td align="center"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#fff;border:1px solid #e3e9e5;border-radius:12px"><tr><td style="padding:32px"><p style="margin:0 0 12px;color:#527362;font-weight:bold;letter-spacing:1px;font-size:12px">SUSHIL POKHAREL</p><h1 style="font-size:23px;margin:0 0 18px">${escapeHtml(subject)}</h1><div style="font-size:15px;line-height:1.75;color:#52615a">${body}</div><p style="font-size:12px;line-height:1.6;color:#78837d;margin:26px 0 0">You received this update because you subscribed to emails from ${siteOrigin}. <a href="${unsubscribeUrl}" style="color:#315648">Unsubscribe</a>.</p></td></tr></table></td></tr></table></body></html>`;
 }
@@ -250,6 +274,15 @@ Deno.serve(async (request: Request) => {
       }, 200, origin);
     }
 
+    if (input.action === 'audit-log') {
+      const { data, error } = await adminClient.from('admin_audit_log')
+        .select('id, actor_id, action, resource_type, resource_id, created_at')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return jsonResponse({ events: data }, 200, origin);
+    }
+
     if (input.action === 'users') {
       const page = Number.isInteger(input.page) && Number(input.page) >= 1 ? Number(input.page) : 1;
       const { data, error } = await adminClient.auth.admin.listUsers({ page, perPage: 100 });
@@ -296,7 +329,12 @@ Deno.serve(async (request: Request) => {
           .insert({ subject, body, status: 'draft', sent_by: auth.user.id });
       const { data, error } = await campaignQuery.select('id').single();
       if (error) throw error;
-      return jsonResponse({ ok: true, campaignId: data.id }, 200, origin);
+      const audited = await auditAdminAction(adminClient, auth.user.id, 'newsletter_draft_saved', 'newsletter_campaign', data.id);
+      return jsonResponse({
+        ok: true,
+        campaignId: data.id,
+        auditWarning: auditWarning(audited),
+      }, 200, origin);
     }
 
     if (input.action === 'user-management') {
@@ -342,7 +380,14 @@ Deno.serve(async (request: Request) => {
         });
         if (error) throw error;
       }
-      return jsonResponse({ ok: true }, 200, origin);
+      const audited = await auditAdminAction(
+        adminClient,
+        auth.user.id,
+        `user_${operation}`,
+        'user',
+        targetUserId,
+      );
+      return jsonResponse({ ok: true, auditWarning: auditWarning(audited) }, 200, origin);
     }
 
     if (input.action === 'send-newsletter') {
@@ -356,7 +401,14 @@ Deno.serve(async (request: Request) => {
         return jsonResponse({ error: 'Choose a valid newsletter draft.' }, 400, origin);
       }
       const result = await sendNewsletter(adminClient, auth.user.id, subject, body, campaignId);
-      return jsonResponse({ ok: true, sent: result.sent }, 200, origin);
+      const audited = await auditAdminAction(
+        adminClient,
+        auth.user.id,
+        'newsletter_sent',
+        'newsletter_campaign',
+        campaignId,
+      );
+      return jsonResponse({ ok: true, sent: result.sent, auditWarning: auditWarning(audited) }, 200, origin);
     }
 
     return jsonResponse({ error: 'Unsupported admin action.' }, 400, origin);

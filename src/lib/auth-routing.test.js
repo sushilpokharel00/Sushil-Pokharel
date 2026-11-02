@@ -20,10 +20,10 @@ test('username validation matches the database constraints', () => {
 });
 
 test('only the trusted super-admin role opens the administrator dashboard', () => {
-  assert.equal(getDashboardPath('super_admin'), '/admin');
-  assert.equal(getDashboardPath('admin'), '/user');
-  assert.equal(getDashboardPath('user'), '/user');
-  assert.equal(getDashboardPath(undefined), '/user');
+  assert.equal(getDashboardPath('super_admin'), '/admin/dashboard');
+  assert.equal(getDashboardPath('admin'), '/user/dashboard');
+  assert.equal(getDashboardPath('user'), '/user/dashboard');
+  assert.equal(getDashboardPath(undefined), '/user/dashboard');
 });
 
 test('auth redirects use only the official production origin', () => {

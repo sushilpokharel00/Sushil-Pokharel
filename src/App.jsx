@@ -571,6 +571,7 @@ function MaintenancePage() {
   const [contactStatus, setContactStatus] = useState('');
   const [betaStatus, setBetaStatus] = useState('');
   const [siteSettings, setSiteSettings] = useState({
+    site_status: 'maintenance',
     is_maintenance: true,
     maintenance_title: 'We’re making improvements.',
     maintenance_message: 'The website is temporarily under maintenance while we work on updates. There’s no confirmed reopening date yet. In the meantime, contact Sushil or request beta access.',
@@ -589,24 +590,34 @@ function MaintenancePage() {
     if (!supabase) return undefined;
 
     let isMounted = true;
-    supabase
-      .from('site_settings')
-      .select('is_maintenance, maintenance_title, maintenance_message, support_online')
-      .eq('id', 1)
-      .single()
-      .then(({ data, error }) => {
+    async function loadSettings() {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('site_status, is_maintenance, maintenance_title, maintenance_message, support_online')
+        .eq('id', 1)
+        .single();
+      if (!isMounted) return;
+      if (error) {
+        const legacyResult = await supabase
+          .from('site_settings')
+          .select('is_maintenance, maintenance_title, maintenance_message, support_online')
+          .eq('id', 1)
+          .single();
         if (!isMounted) return;
-        if (error) {
+        if (legacyResult.error) {
           setSettingsWarning('The latest website status is temporarily unavailable. Showing the default message.');
           return;
         }
-        setSiteSettings(data);
-      })
-      .catch(() => {
-        if (isMounted) {
-          setSettingsWarning('The latest website status is temporarily unavailable. Showing the default message.');
-        }
-      });
+        setSiteSettings({ ...legacyResult.data, site_status: legacyResult.data.is_maintenance ? 'maintenance' : 'live' });
+        return;
+      }
+      setSiteSettings(data);
+    }
+
+    loadSettings().catch((error) => {
+      console.error('Could not load the website status page settings.', error);
+      if (isMounted) setSettingsWarning('The latest website status is temporarily unavailable. Showing the default message.');
+    });
 
     return () => {
       isMounted = false;
@@ -701,8 +712,10 @@ function MaintenancePage() {
             <span className="status-orbit" />
             <span className="status-core" />
           </div>
-          <span className="eyebrow"><span /> {siteSettings.is_maintenance ? 'WEBSITE STATUS' : 'NOW OPEN'}</span>
-          <h2 className="maintenance-title" id="maintenance-title">{siteSettings.maintenance_title}</h2>
+          <span className="eyebrow"><span /> {siteSettings.site_status === 'offline' ? 'TEMPORARILY OFFLINE' : 'SCHEDULED MAINTENANCE'}</span>
+          <h2 className="maintenance-title" id="maintenance-title">
+            {siteSettings.site_status === 'offline' ? 'Public access is temporarily paused.' : siteSettings.maintenance_title}
+          </h2>
           <p className="maintenance-copy">
             {siteSettings.maintenance_message}
           </p>
@@ -1179,6 +1192,7 @@ function DashboardGate({ isAdmin, children }) {
 
 export default function App() {
   const [pathname, setPathname] = useState(() => getPagePathname());
+  const [siteMode, setSiteMode] = useState(() => (supabase ? 'loading' : 'live'));
   const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
   const [cookieConsent, setCookieConsent] = useState(() => {
     try {
@@ -1237,6 +1251,63 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!supabase) return undefined;
+    let active = true;
+
+    function applySettings(settings) {
+      if (!active || !settings) return;
+      const mode = ['live', 'maintenance', 'offline'].includes(settings.site_status)
+        ? settings.site_status
+        : settings.is_maintenance ? 'maintenance' : 'live';
+      setSiteMode(mode);
+    }
+
+    async function loadSiteMode() {
+      const { data, error } = await supabase.from('site_settings')
+        .select('site_status, is_maintenance')
+        .eq('id', 1)
+        .maybeSingle();
+      if (error) {
+        const legacyResult = await supabase.from('site_settings')
+          .select('is_maintenance')
+          .eq('id', 1)
+          .maybeSingle();
+        if (legacyResult.error) throw legacyResult.error;
+        if (!legacyResult.data) throw new Error('The public site settings row is missing.');
+        applySettings(legacyResult.data);
+        return;
+      }
+      if (!data) throw new Error('The public site settings row is missing.');
+      applySettings(data);
+    }
+
+    loadSiteMode().catch((error) => {
+      console.error('Could not load the public website mode.', error);
+      if (active) setSiteMode('live');
+    });
+
+    const channel = supabase.channel('public-site-mode')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'site_settings',
+        filter: 'id=eq.1',
+      }, (payload) => applySettings(payload.new))
+      .subscribe((status, error) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error('Live website status updates are unavailable.', error);
+        }
+      });
+
+    return () => {
+      active = false;
+      supabase.removeChannel(channel).catch((error) => {
+        console.error('Could not close the website status subscription.', error);
+      });
+    };
+  }, []);
+
+  useEffect(() => {
     if (!supabase || cookieConsent.preferences?.analytics !== true || pathname.startsWith('/admin')) return;
     supabase.functions.invoke('record-page-view', {
       body: { pagePath: pathname },
@@ -1268,7 +1339,7 @@ export default function App() {
         <Footer />
       </>
     );
-  } else if (pathname === '/admin') {
+  } else if (pathname === '/admin' || pathname === '/admin/dashboard') {
     pageContent = (
       <>
         <Header currentPath={pathname} />
@@ -1288,7 +1359,7 @@ export default function App() {
         <Footer />
       </>
     );
-  } else if (pathname === '/user' || pathname === '/dashboard') {
+  } else if (pathname === '/user' || pathname === '/user/dashboard' || pathname === '/dashboard') {
     pageContent = (
       <>
         <Header currentPath={pathname} />
@@ -1340,6 +1411,13 @@ export default function App() {
     );
   } else {
     pageContent = <TermsPage />;
+  }
+
+  const adminRoute = pathname === '/admin' || pathname.startsWith('/admin/');
+  if (!adminRoute && siteMode === 'loading') {
+    pageContent = <PageLoading />;
+  } else if (!adminRoute && siteMode !== 'live') {
+    pageContent = <MaintenancePage key={siteMode} />;
   }
 
   return (
