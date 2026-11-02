@@ -330,6 +330,11 @@ Traffic data includes only visitors who opted in to analytics and is counted
 per visitor, page, and UTC day. Active-user tracking is not enabled. Since no
 independent uptime monitor is configured, the page reports uptime history as
 unavailable rather than estimating a percentage.
+When the public site is Live, account pages are available at `/account` (sign
+in), `/signup` (create an account), and `/admin/login` (administrator sign in).
+Sign-in and sign-up switches update the URL and support browser back/forward
+navigation. Maintenance/offline mode continues to show its public holding
+page; administrator routes remain available.
 `/user/dashboard`, `/user`, and `/dashboard` require a signed-in non-Super-Admin
 user. `/admin/dashboard` and `/admin` are restricted to Super Admins with a
 verified TOTP MFA session. Public routes show the maintenance/offline screen

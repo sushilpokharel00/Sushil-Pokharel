@@ -17,7 +17,7 @@ import brandImage from '../favicon.svg';
 import { isNativeApp, openExternalUrl } from './native-app.js';
 import { sitePath } from './site-path.js';
 import { supabase } from './lib/supabase.js';
-import { isPasswordRecoveryUrl } from './lib/auth-routing.js';
+import { getAuthScreen, isPasswordRecoveryUrl } from './lib/auth-routing.js';
 import {
   COOKIE_PREFERENCES_KEY,
   parseCookiePreferences,
@@ -89,6 +89,9 @@ function Header({ currentPath }) {
           <a href={sitePath('/account')} aria-current={pathname === '/account' || pathname === '/login' || pathname === '/account/security' || pathname === '/reset-password' ? 'page' : undefined}>
             Sign in
           </a>
+          <a href={sitePath('/signup')} aria-current={pathname === '/signup' || pathname === '/register' ? 'page' : undefined}>
+            Sign up
+          </a>
           <a
             className={isNative ? undefined : 'app-download-link'}
             href={sitePath('/app')}
@@ -109,6 +112,14 @@ function getPagePathname() {
   if (!basePath || basePath === '/') return pathname;
   if (pathname === basePath) return '/';
   return pathname.startsWith(`${basePath}/`) ? pathname.slice(basePath.length) : pathname;
+}
+
+function getPageLocation() {
+  return {
+    pathname: getPagePathname(),
+    search: window.location.search,
+    hash: window.location.hash,
+  };
 }
 
 function Footer() {
@@ -1191,7 +1202,8 @@ function DashboardGate({ isAdmin, children }) {
 }
 
 export default function App() {
-  const [pathname, setPathname] = useState(() => getPagePathname());
+  const [pageLocation, setPageLocation] = useState(getPageLocation);
+  const { pathname, search } = pageLocation;
   const [siteMode, setSiteMode] = useState(() => (supabase ? 'loading' : 'live'));
   const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
   const [cookieConsent, setCookieConsent] = useState(() => {
@@ -1232,7 +1244,7 @@ export default function App() {
 
   useEffect(() => {
     const onLocationChange = () => {
-      setPathname(getPagePathname());
+      setPageLocation(getPageLocation());
       window.scrollTo(0, 0);
     };
 
@@ -1330,8 +1342,9 @@ export default function App() {
     return () => script.remove();
   }, [cookieConsent.preferences?.advertising]);
 
+  const authScreen = getAuthScreen(pathname);
   let pageContent;
-  if (pathname === '/admin/login') {
+  if (authScreen === 'admin') {
     pageContent = (
       <>
         <Header currentPath={pathname} />
@@ -1351,11 +1364,11 @@ export default function App() {
         <Footer />
       </>
     );
-  } else if (pathname === '/account' || pathname === '/login' || pathname === '/account/security' || pathname === '/reset-password') {
+  } else if (authScreen) {
     pageContent = (
       <>
         <Header currentPath={pathname} />
-        <AuthPage key={pathname} isAccountPage />
+        <AuthPage key={pathname} isAccountPage initialScreen={authScreen} />
         <Footer />
       </>
     );
@@ -1394,7 +1407,7 @@ export default function App() {
   } else if (pathname === '/beta') {
     pageContent = <BetaRequestPage />;
   } else if (pathname === '/beta-requested') {
-    pageContent = new URLSearchParams(window.location.search).has('submitted')
+    pageContent = new URLSearchParams(search).has('submitted')
       ? <BetaRequestConfirmationPage />
       : <BetaRequestPage />;
   } else if (pathname === '/status') {

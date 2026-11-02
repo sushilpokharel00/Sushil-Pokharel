@@ -8,7 +8,7 @@ import {
 } from './lib/auth-routing.js';
 import { supabase, supabaseConfigurationError } from './lib/supabase.js';
 import { getPasswordPolicyError } from './lib/password-policy.js';
-import { sitePath } from './site-path.js';
+import { navigateTo, sitePath } from './site-path.js';
 
 const authRedirectOrigin = import.meta.env.VITE_AUTH_REDIRECT_URL?.trim()
   || 'https://sushilpokharel00.com.np';
@@ -51,7 +51,11 @@ function AuthField({
   );
 }
 
-export default function AuthPage({ isAccountPage = false, isAdminPage = false }) {
+export default function AuthPage({
+  isAccountPage = false,
+  isAdminPage = false,
+  initialScreen = 'sign-in',
+}) {
   const [session, setSession] = useState(null);
   const [screen, setScreen] = useState(() => (
     isPasswordRecoveryUrl(window.location) ? 'new-password' : 'loading'
@@ -108,7 +112,7 @@ export default function AuthPage({ isAccountPage = false, isAdminPage = false })
 
   useEffect(() => {
     if (!supabase) {
-      setScreen('sign-in');
+      setScreen(initialScreen);
       return undefined;
     }
 
@@ -130,7 +134,7 @@ export default function AuthPage({ isAccountPage = false, isAdminPage = false })
       const { data, error } = await supabase.auth.getSession();
       if (error) {
         setNotice({ kind: 'error', text: error.message });
-        setScreen('sign-in');
+        setScreen(initialScreen);
         return;
       }
 
@@ -145,7 +149,7 @@ export default function AuthPage({ isAccountPage = false, isAdminPage = false })
           setScreen('forgot-password');
           return;
         }
-        setScreen('sign-in');
+        setScreen(initialScreen);
         return;
       }
 
@@ -167,7 +171,7 @@ export default function AuthPage({ isAccountPage = false, isAdminPage = false })
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [initialScreen]);
 
   async function continueWithSession({ redirectToDashboard = false } = {}) {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -507,6 +511,10 @@ export default function AuthPage({ isAccountPage = false, isAdminPage = false })
 
   function goTo(nextScreen) {
     setNotice(null);
+    if (!isAdminPage && (nextScreen === 'sign-in' || nextScreen === 'sign-up')) {
+      navigateTo(sitePath(nextScreen === 'sign-up' ? '/signup' : '/account'));
+      return;
+    }
     setScreen(nextScreen);
   }
 

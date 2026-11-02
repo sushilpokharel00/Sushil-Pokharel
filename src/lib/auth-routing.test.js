@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  getAuthScreen,
   getAuthRedirectUrl,
   getDashboardPath,
   getUsernameError,
@@ -24,6 +25,15 @@ test('only the trusted super-admin role opens the administrator dashboard', () =
   assert.equal(getDashboardPath('admin'), '/user/dashboard');
   assert.equal(getDashboardPath('user'), '/user/dashboard');
   assert.equal(getDashboardPath(undefined), '/user/dashboard');
+});
+
+test('sign-in, sign-up, and administrator URLs resolve to the right auth screen', () => {
+  assert.equal(getAuthScreen('/account'), 'sign-in');
+  assert.equal(getAuthScreen('/login'), 'sign-in');
+  assert.equal(getAuthScreen('/signup'), 'sign-up');
+  assert.equal(getAuthScreen('/register'), 'sign-up');
+  assert.equal(getAuthScreen('/admin/login'), 'admin');
+  assert.equal(getAuthScreen('/dashboard'), null);
 });
 
 test('auth redirects use only the official production origin', () => {

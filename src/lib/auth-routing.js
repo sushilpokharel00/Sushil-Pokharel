@@ -13,6 +13,18 @@ export function getDashboardPath(role) {
   return role === 'super_admin' ? '/admin/dashboard' : '/user/dashboard';
 }
 
+export function getAuthScreen(pathname) {
+  if (pathname === '/admin/login') return 'admin';
+  if (pathname === '/signup' || pathname === '/register') return 'sign-up';
+  if (
+    pathname === '/account'
+    || pathname === '/login'
+    || pathname === '/account/security'
+    || pathname === '/reset-password'
+  ) return 'sign-in';
+  return null;
+}
+
 function hasRecoveryType(location) {
   const hashParams = new URLSearchParams(location.hash.replace(/^#/, ''));
   const queryParams = new URLSearchParams(location.search);
