@@ -63,8 +63,8 @@ async function authenticateAdmin(request: Request, supabaseUrl: string, anonKey:
     global: { headers: { Authorization: `Bearer ${token}` } },
   });
   const [{ data: { user }, error: userError }, { data: assurance, error: assuranceError }] = await Promise.all([
-    client.auth.getUser(),
-    client.auth.mfa.getAuthenticatorAssuranceLevel(),
+    client.auth.getUser(token),
+    client.auth.mfa.getAuthenticatorAssuranceLevel(token),
   ]);
   if (userError || !user) return { error: 'Your sign-in session is invalid or expired.' };
   if (user.app_metadata?.role !== 'super_admin') return { error: 'Super Admin access is required.' };
