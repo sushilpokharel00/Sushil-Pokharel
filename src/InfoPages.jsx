@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { openExternalUrl } from './native-app.js';
+import { getFunctionErrorMessage } from './lib/function-error.js';
 import { supabase } from './lib/supabase.js';
 import { sitePath } from './site-path.js';
 
@@ -472,7 +473,7 @@ export function NewsletterSignup() {
       form.reset();
       setNotice(result.message || 'Check your email for a confirmation link.');
     } catch (error) {
-      setNotice(error.message || 'Could not request your subscription. Please try again later.');
+      setNotice(await getFunctionErrorMessage(error, 'Could not request your subscription. Please try again later.'));
     } finally {
       setBusy(false);
     }
@@ -533,7 +534,7 @@ export function NewsletterActionPage({ Header, Footer }) {
       setState(action === 'confirm' ? 'confirmed' : 'unsubscribed');
     } catch (error) {
       setState('error');
-      setNotice(error.message || 'The newsletter request could not be completed.');
+      setNotice(await getFunctionErrorMessage(error, 'The newsletter request could not be completed.'));
     }
   }
 

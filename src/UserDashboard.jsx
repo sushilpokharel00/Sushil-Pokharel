@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from './lib/supabase.js';
+import { getFunctionErrorMessage } from './lib/function-error.js';
 import { getUsernameError, normalizeUsername } from './lib/auth-routing.js';
 import { getActivityWeek, getPersonalMetrics } from './lib/dashboard-metrics.js';
 import { sitePath } from './site-path.js';
@@ -203,7 +204,10 @@ export default function UserDashboard() {
       });
       await loadDashboard();
     } catch (error) {
-      reportError(error, 'Could not update your newsletter preference.');
+      setNotice({
+        kind: 'error',
+        text: await getFunctionErrorMessage(error, 'Could not update your newsletter preference.'),
+      });
     } finally {
       setBusy(false);
     }
