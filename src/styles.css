@@ -685,6 +685,21 @@ a:focus-visible {
   color: var(--accent-dark);
 }
 
+.header-nav .header-account-link {
+  max-width: 180px;
+  overflow: hidden;
+  padding: 8px 12px;
+  border: 1px solid #dfe8e2;
+  border-radius: 8px;
+  color: var(--accent-dark);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-nav .header-account-link:hover {
+  background: #f3f7f4;
+}
+
 .auth-page {
   min-height: calc(100vh - 176px);
   display: grid;
@@ -2460,6 +2475,11 @@ p {
     justify-content: space-between;
     gap: 7px;
     font-size: 11px;
+  }
+
+  .header-nav .header-account-link {
+    max-width: 110px;
+    padding: 8px;
   }
 
   .app-download-link {

@@ -17,7 +17,7 @@ import brandImage from '../favicon.svg';
 import { isNativeApp, openExternalUrl } from './native-app.js';
 import { sitePath } from './site-path.js';
 import { supabase } from './lib/supabase.js';
-import { getAuthScreen, isPasswordRecoveryUrl } from './lib/auth-routing.js';
+import { getAuthScreen, getDashboardPath, isPasswordRecoveryUrl } from './lib/auth-routing.js';
 import {
   COOKIE_PREFERENCES_KEY,
   parseCookiePreferences,
@@ -78,6 +78,22 @@ function ArrowIcon() {
 function Header({ currentPath }) {
   const pathname = currentPath || getPagePathname();
   const isNative = isNativeApp();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    if (!supabase) return undefined;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const displayName = user?.user_metadata?.username
+    || user?.user_metadata?.full_name
+    || user?.email?.split('@')[0]
+    || 'Account';
 
   return (
     <header className="site-header">
@@ -86,12 +102,24 @@ function Header({ currentPath }) {
         <nav className="header-nav" aria-label="Main navigation">
           <a href={sitePath('/')} aria-current={pathname === '/' ? 'page' : undefined}>Home</a>
           <a href={sitePath('/status')} aria-current={pathname === '/status' ? 'page' : undefined}>Status</a>
-          <a href={sitePath('/account')} aria-current={pathname === '/account' || pathname === '/login' || pathname === '/account/security' || pathname === '/reset-password' ? 'page' : undefined}>
-            Sign in
-          </a>
-          <a href={sitePath('/signup')} aria-current={pathname === '/signup' || pathname === '/register' ? 'page' : undefined}>
-            Sign up
-          </a>
+          {user ? (
+            <a
+              className="header-account-link"
+              href={sitePath(getDashboardPath(user.app_metadata?.role))}
+              aria-label={`Signed in as ${displayName}; open your dashboard`}
+            >
+              {displayName}
+            </a>
+          ) : (
+            <>
+              <a href={sitePath('/account')} aria-current={pathname === '/account' || pathname === '/login' || pathname === '/account/security' || pathname === '/reset-password' ? 'page' : undefined}>
+                Sign in
+              </a>
+              <a href={sitePath('/signup')} aria-current={pathname === '/signup' || pathname === '/register' ? 'page' : undefined}>
+                Sign up
+              </a>
+            </>
+          )}
           <a
             className={isNative ? undefined : 'app-download-link'}
             href={sitePath('/app')}
