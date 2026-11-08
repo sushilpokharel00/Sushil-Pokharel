@@ -63,10 +63,6 @@ export default function UserDashboard() {
       setState('unconfigured');
       return;
     }
-    if (!['draft', 'pending'].includes(status)) {
-      setNotice({ kind: 'error', text: 'Choose a valid post action.' });
-      return;
-    }
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     if (sessionError) throw sessionError;
     if (!session) {
@@ -215,6 +211,10 @@ export default function UserDashboard() {
 
   async function savePost(event, status) {
     event.preventDefault();
+    if (!['draft', 'pending'].includes(status)) {
+      setNotice({ kind: 'error', text: 'Choose a valid post action.' });
+      return;
+    }
     const formData = new FormData(event.currentTarget);
     const title = formData.get('title').toString().trim();
     const content = formData.get('content').toString().trim();
@@ -395,197 +395,220 @@ export default function UserDashboard() {
       : '';
     content = (
       <>
-        <div className="user-dashboard-header">
-          <div className="user-welcome-banner">
-            <div className="user-welcome-copy">
-              <span className="auth-eyebrow">YOUR WORKSPACE</span>
-              <h1>Welcome back, {displayName}</h1>
-              <p>Keep your profile current and turn your next idea into a community post.</p>
+        <div className="user-dashboard-layout">
+          <aside className="user-dashboard-sidebar">
+            <a className="user-sidebar-brand" href={sitePath('/')} aria-label="Sushil Pokharel home">
+              <span className="user-sidebar-brand-mark" aria-hidden="true">SP</span>
+              <span><strong>My workspace</strong><small>ACCOUNT CENTER</small></span>
+            </a>
+            <div className="user-sidebar-profile">
+              <span className="user-sidebar-avatar" aria-hidden="true">
+                {avatarUrl ? <img src={avatarUrl} alt="" /> : displayName.slice(0, 1).toUpperCase()}
+              </span>
+              <span className="user-sidebar-identity"><strong>{displayName}</strong><small>{user.email}</small></span>
             </div>
-            <div className="user-welcome-avatar" aria-hidden="true">
-              {avatarUrl ? <img src={avatarUrl} alt="" /> : <span>{displayName.slice(0, 1).toUpperCase()}</span>}
-            </div>
-          </div>
-          <div className="user-dashboard-toolbar">
-            <span className="user-account-email">{user.email}</span>
-            <button className="auth-secondary" type="button" onClick={signOut} disabled={busy}>Sign out</button>
-          </div>
-        </div>
-        <div className="user-metric-grid" aria-label="Your post statistics">
-          <article><span>Total posts</span><strong>{metrics.totalPosts}</strong><small>Across your workspace</small></article>
-          <article><span>Published</span><strong>{metrics.publishedPosts}</strong><small>Visible to the community</small></article>
-          <article><span>Under review</span><strong>{metrics.inReviewPosts}</strong><small>Awaiting an administrator</small></article>
-          <article><span>Drafts</span><strong>{metrics.drafts}</strong><small>Ready when you are</small></article>
-        </div>
-        <section className="user-activity-chart" aria-labelledby="activity-chart-title">
-          <div className="user-section-heading">
-            <div><span className="auth-eyebrow">YOUR MOMENTUM</span><h2 id="activity-chart-title">Activity this week</h2></div>
-            <span>{metrics.recentActivity} recent events · chart uses up to 100 account events</span>
-          </div>
-          <div className="user-week-chart" role="img" aria-label="Your account activity across the last seven days">
-            {activityWeek.map((day) => (
-              <div className="user-week-day" key={day.date} title={`${day.date}: ${day.count} activities`}>
-                <span className="user-week-bar-track"><span style={{ height: `${day.count ? Math.max(day.count / activityPeak * 100, 8) : 0}%` }} /></span>
-                <strong>{day.count}</strong>
-                <time dateTime={day.date}>{day.label}</time>
-              </div>
-            ))}
-          </div>
-        </section>
-        <section className="dashboard-panel" aria-labelledby="profile-title">
-          <div className="user-section-heading"><div><span className="auth-eyebrow">PERSONAL DETAILS</span><h2 id="profile-title">Profile and preferences</h2></div></div>
-          <div className="avatar-row">
-            {avatarUrl ? <img className="profile-avatar" src={avatarUrl} alt="Your profile avatar" /> : <div className="profile-avatar avatar-placeholder" aria-hidden="true">{profile.full_name.slice(0, 1) || 'U'}</div>}
-            <label className="auth-secondary avatar-upload">
-              Upload avatar
-              <input type="file" accept="image/png,image/jpeg,image/webp" onChange={uploadAvatar} disabled={busy} />
-            </label>
-            <span>JPG, PNG, or WebP; up to 2 MB.</span>
-          </div>
-          <form className="auth-form" onSubmit={saveProfile}>
-            <div className="auth-field">
-              <label htmlFor="profile-username">Username</label>
-              <input id="profile-username" autoComplete="username" value={profile.username} minLength={3} maxLength={32} onChange={(event) => setProfile((current) => ({ ...current, username: event.target.value }))} required />
-            </div>
-            <div className="auth-field">
-              <label htmlFor="profile-name">Display name</label>
-              <input id="profile-name" value={profile.full_name} maxLength={100} onChange={(event) => setProfile((current) => ({ ...current, full_name: event.target.value }))} />
-            </div>
-            <label className="admin-checkbox">
-              <input type="checkbox" checked={profile.email_notifications} onChange={(event) => setProfile((current) => ({ ...current, email_notifications: event.target.checked }))} />
-              <span>Receive important account and support notifications</span>
-            </label>
-            <button className="auth-submit" type="submit" disabled={busy}>Save profile</button>
-          </form>
-          <label className="admin-checkbox newsletter-preference">
-            <input type="checkbox" checked={profile.newsletter_enabled} disabled={busy} onChange={(event) => setNewsletterPreference(event.target.checked)} />
-            <span>Subscribe to occasional website updates. New subscriptions require email confirmation; see the <a href={sitePath('/privacy')}>Privacy Policy</a>.</span>
-          </label>
-        </section>
-
-        <section className="dashboard-panel" aria-labelledby="posts-title">
-          <div className="user-section-heading"><div><span className="auth-eyebrow">CREATE &amp; SHARE</span><h2 id="posts-title">Your posts</h2></div><span>{posts.length} saved</span></div>
-          <p className="auth-description">Posts are private until an administrator approves them. Submit a draft for review when it is ready.</p>
-          <form className="auth-form post-editor" key={editingPost?.id ?? 'new-post'} onSubmit={(event) => {
-            const action = event.nativeEvent.submitter?.value ?? 'draft';
-            return savePost(event, action);
-          }}>
-            <div className="auth-field">
-              <label htmlFor="post-title">Title</label>
-              <input id="post-title" name="title" defaultValue={editingPost?.title ?? ''} required minLength={3} maxLength={160} />
-            </div>
-            <div className="auth-field">
-              <label htmlFor="post-content">Content</label>
-              <textarea id="post-content" name="content" rows={6} defaultValue={editingPost?.content ?? ''} required minLength={20} maxLength={20000} />
-            </div>
-            <div className="auth-field">
-              <label htmlFor="post-category">Category</label>
-              <select id="post-category" name="category" defaultValue={editingPost?.category ?? 'other'}>
-                {postCategories.map(([value, label]) => <option value={value} key={value}>{label}</option>)}
-              </select>
-            </div>
-            <div className="auth-field">
-              <label htmlFor="post-featured-image">Featured image <span>Optional · JPG, PNG, or WebP · up to 5 MB</span></label>
-              <input
-                id="post-featured-image"
-                name="featuredImage"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={(event) => {
-                  setSelectedPostImage(event.currentTarget.files?.[0] ?? null);
-                  setRemovePostImage(false);
-                }}
-                disabled={busy}
-              />
-              {postImagePreview && <img className="post-image-preview" src={postImagePreview} alt="Featured image preview" />}
-              {editingPost?.featured_image_path && (
-                <label className="admin-checkbox">
-                  <input
-                    type="checkbox"
-                    name="removeImage"
-                    checked={removePostImage}
-                    onChange={(event) => {
-                      setRemovePostImage(event.target.checked);
-                      if (event.target.checked) setSelectedPostImage(null);
-                    }}
-                  />
-                  <span>Remove the current featured image</span>
-                </label>
-              )}
-            </div>
-            <div className="dashboard-actions">
-              <button className="auth-secondary" type="submit" name="postAction" value="draft" disabled={busy}>Save draft</button>
-              <button className="auth-submit" type="submit" name="postAction" value="pending" disabled={busy}>Submit for review</button>
-              {editingPost && <button className="auth-secondary" type="button" onClick={() => { setEditingPost(null); setSelectedPostImage(null); setRemovePostImage(false); }}>Cancel edit</button>}
-            </div>
-          </form>
-          <ul className="dashboard-list">
-            {posts.map((post) => (
-              <li key={post.id} className="dashboard-list-item">
-                <div className="support-request-heading">
-                  <h3>{post.title}</h3>
-                  <span className={`post-status-badge post-status-${post.status}`}>{post.status === 'approved' ? 'Published' : post.status === 'pending' ? 'Under review' : post.status === 'rejected' ? 'Needs changes' : 'Draft'}{post.featured ? ' · featured' : ''}</span>
+            <nav className="user-dashboard-nav" aria-label="Account sections">
+              <a href="#overview">Overview</a>
+              <a href="#profile">Profile &amp; preferences</a>
+              <a href="#posts">Your posts</a>
+              <a href="#updates">Platform updates</a>
+              <a href="#security">Account security</a>
+            </nav>
+          </aside>
+          <div className="user-dashboard-main">
+            <div className="user-dashboard-header" id="overview">
+              <div className="user-welcome-banner">
+                <div className="user-welcome-copy">
+                  <span className="auth-eyebrow">YOUR WORKSPACE</span>
+                  <h1>Welcome back, {displayName}</h1>
+                  <p>Keep your profile current and turn your next idea into a community post.</p>
                 </div>
-                <span className="post-category-label">{postCategories.find(([value]) => value === post.category)?.[1] ?? 'Other'}</span>
-                {post.featured_image_url && <img className="post-image-preview" src={post.featured_image_url} alt={`Featured image for ${post.title}`} />}
-                <p>{post.content}</p>
-                {post.moderation_note && <p className="moderation-note">Review note: {post.moderation_note}</p>}
-                <time dateTime={post.updated_at}>Updated {showDate(post.updated_at)}</time>
-                <div className="dashboard-actions">
-                    {post.status === 'approved' ? (
-                      <button className="auth-secondary" type="button" disabled={busy} onClick={() => createRevision(post)}>Withdraw and revise</button>
-                    ) : (
-                    <button className="auth-secondary" type="button" onClick={() => setEditingPost(post)}>Edit</button>
-                    )}
-                    <button className="auth-submit" type="button" disabled={busy || post.status === 'pending' || post.status === 'approved'} onClick={async () => {
-                      setBusy(true);
-                      setNotice(null);
-                      try {
-                        const { error } = await supabase.from('user_posts')
-                          .update({ status: 'pending', moderation_note: null, reviewed_at: null })
-                          .eq('id', post.id).eq('user_id', user.id);
-                        if (error) throw error;
-                        setNotice({ kind: 'success', text: 'Your post is submitted for review.' });
-                        await loadDashboard();
-                      } catch (error) {
-                        reportError(error, 'Could not submit your post.');
-                      } finally {
-                        setBusy(false);
-                      }
-                    }}>{post.status === 'pending' ? 'Awaiting review' : post.status === 'approved' ? 'Published' : 'Submit for review'}</button>
-                    <button className="account-delete-button" type="button" disabled={busy} onClick={() => deletePost(post)}>Delete</button>
+                <div className="user-welcome-avatar" aria-hidden="true">
+                  {avatarUrl ? <img src={avatarUrl} alt="" /> : <span>{displayName.slice(0, 1).toUpperCase()}</span>}
+                </div>
+              </div>
+              <div className="user-dashboard-toolbar">
+                <span className="user-account-email">Your personal account overview</span>
+                <button className="auth-secondary" type="button" onClick={signOut} disabled={busy}>Sign out</button>
+              </div>
+            </div>
+            <div className="user-metric-grid" aria-label="Your post statistics">
+              <article><span>Total posts</span><strong>{metrics.totalPosts}</strong><small>Across your workspace</small></article>
+              <article><span>Published</span><strong>{metrics.publishedPosts}</strong><small>Visible to the community</small></article>
+              <article><span>Under review</span><strong>{metrics.inReviewPosts}</strong><small>Awaiting an administrator</small></article>
+              <article><span>Drafts</span><strong>{metrics.drafts}</strong><small>Ready when you are</small></article>
+            </div>
+            <section className="user-activity-chart" aria-labelledby="activity-chart-title">
+              <div className="user-section-heading">
+                <div><span className="auth-eyebrow">YOUR MOMENTUM</span><h2 id="activity-chart-title">Activity this week</h2></div>
+                <span>{metrics.recentActivity} recent events · chart uses up to 100 account events</span>
+              </div>
+              <div className="user-week-chart" role="img" aria-label="Your account activity across the last seven days">
+                {activityWeek.map((day) => (
+                  <div className="user-week-day" key={day.date} title={`${day.date}: ${day.count} activities`}>
+                    <span className="user-week-bar-track"><span style={{ height: `${day.count ? Math.max(day.count / activityPeak * 100, 8) : 0}%` }} /></span>
+                    <strong>{day.count}</strong>
+                    <time dateTime={day.date}>{day.label}</time>
                   </div>
-              </li>
-            ))}
-            {posts.length === 0 && <li className="support-empty">You have not created any posts.</li>}
-          </ul>
-        </section>
+                ))}
+              </div>
+            </section>
+            <section className="dashboard-panel" id="profile" aria-labelledby="profile-title">
+              <div className="user-section-heading"><div><span className="auth-eyebrow">PERSONAL DETAILS</span><h2 id="profile-title">Profile and preferences</h2></div></div>
+              <div className="avatar-row">
+                {avatarUrl ? <img className="profile-avatar" src={avatarUrl} alt="Your profile avatar" /> : <div className="profile-avatar avatar-placeholder" aria-hidden="true">{displayName.slice(0, 1).toUpperCase()}</div>}
+                <label className="auth-secondary avatar-upload">
+                  Upload avatar
+                  <input type="file" accept="image/png,image/jpeg,image/webp" onChange={uploadAvatar} disabled={busy} />
+                </label>
+                <span>JPG, PNG, or WebP; up to 2 MB.</span>
+              </div>
+              <form className="auth-form" onSubmit={saveProfile}>
+                <div className="auth-field">
+                  <label htmlFor="profile-username">Username</label>
+                  <input id="profile-username" autoComplete="username" value={profile.username} minLength={3} maxLength={32} onChange={(event) => setProfile((current) => ({ ...current, username: event.target.value }))} required />
+                </div>
+                <div className="auth-field">
+                  <label htmlFor="profile-name">Display name</label>
+                  <input id="profile-name" value={profile.full_name} maxLength={100} onChange={(event) => setProfile((current) => ({ ...current, full_name: event.target.value }))} />
+                </div>
+                <label className="admin-checkbox">
+                  <input type="checkbox" checked={profile.email_notifications} onChange={(event) => setProfile((current) => ({ ...current, email_notifications: event.target.checked }))} />
+                  <span>Receive important account and support notifications</span>
+                </label>
+                <button className="auth-submit" type="submit" disabled={busy}>Save profile</button>
+              </form>
+              <label className="admin-checkbox newsletter-preference">
+                <input type="checkbox" checked={profile.newsletter_enabled} disabled={busy} onChange={(event) => setNewsletterPreference(event.target.checked)} />
+                <span>Subscribe to occasional website updates. New subscriptions require email confirmation; see the <a href={sitePath('/privacy')}>Privacy Policy</a>.</span>
+              </label>
+            </section>
 
-        <section className="dashboard-panel" aria-labelledby="announcements-title">
-          <h2 id="announcements-title">Platform updates</h2>
-          {announcements.length ? (
-            <ul className="dashboard-list">
-              {announcements.map((announcement) => (
-                <li key={announcement.id} className="dashboard-list-item">
-                  <h3>{announcement.title}</h3>
-                  <p>{announcement.body}</p>
-                  <time dateTime={announcement.published_at}>{showDate(announcement.published_at)}</time>
-                </li>
-              ))}
-            </ul>
-          ) : <p className="support-empty">There are no published updates.</p>}
-        </section>
+            <section className="dashboard-panel" id="posts" aria-labelledby="posts-title">
+              <div className="user-section-heading"><div><span className="auth-eyebrow">CREATE &amp; SHARE</span><h2 id="posts-title">Your posts</h2></div><span>{posts.length} saved</span></div>
+              <p className="auth-description">Posts are private until an administrator approves them. Submit a draft for review when it is ready.</p>
+              <form className="auth-form post-editor" key={editingPost?.id ?? 'new-post'} onSubmit={(event) => {
+                const action = event.nativeEvent.submitter?.value ?? 'draft';
+                return savePost(event, action);
+              }}>
+                <div className="auth-field">
+                  <label htmlFor="post-title">Title</label>
+                  <input id="post-title" name="title" defaultValue={editingPost?.title ?? ''} required minLength={3} maxLength={160} />
+                </div>
+                <div className="auth-field">
+                  <label htmlFor="post-content">Content</label>
+                  <textarea id="post-content" name="content" rows={6} defaultValue={editingPost?.content ?? ''} required minLength={20} maxLength={20000} />
+                </div>
+                <div className="auth-field">
+                  <label htmlFor="post-category">Category</label>
+                  <select id="post-category" name="category" defaultValue={editingPost?.category ?? 'other'}>
+                    {postCategories.map(([value, label]) => <option value={value} key={value}>{label}</option>)}
+                  </select>
+                </div>
+                <div className="auth-field">
+                  <label htmlFor="post-featured-image">Featured image <span>Optional · JPG, PNG, or WebP · up to 5 MB</span></label>
+                  <input
+                    id="post-featured-image"
+                    name="featuredImage"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(event) => {
+                      setSelectedPostImage(event.currentTarget.files?.[0] ?? null);
+                      setRemovePostImage(false);
+                    }}
+                    disabled={busy}
+                  />
+                  {postImagePreview && <img className="post-image-preview" src={postImagePreview} alt="Featured image preview" />}
+                  {editingPost?.featured_image_path && (
+                    <label className="admin-checkbox">
+                      <input
+                        type="checkbox"
+                        name="removeImage"
+                        checked={removePostImage}
+                        onChange={(event) => {
+                          setRemovePostImage(event.target.checked);
+                          if (event.target.checked) setSelectedPostImage(null);
+                        }}
+                      />
+                      <span>Remove the current featured image</span>
+                    </label>
+                  )}
+                </div>
+                <div className="dashboard-actions">
+                  <button className="auth-secondary" type="submit" name="postAction" value="draft" disabled={busy}>Save draft</button>
+                  <button className="auth-submit" type="submit" name="postAction" value="pending" disabled={busy}>Submit for review</button>
+                  {editingPost && <button className="auth-secondary" type="button" onClick={() => { setEditingPost(null); setSelectedPostImage(null); setRemovePostImage(false); }}>Cancel edit</button>}
+                </div>
+              </form>
+              <ul className="dashboard-list">
+                {posts.map((post) => (
+                  <li key={post.id} className="dashboard-list-item">
+                    <div className="support-request-heading">
+                      <h3>{post.title}</h3>
+                      <span className={`post-status-badge post-status-${post.status}`}>{post.status === 'approved' ? 'Published' : post.status === 'pending' ? 'Under review' : post.status === 'rejected' ? 'Needs changes' : 'Draft'}{post.featured ? ' · featured' : ''}</span>
+                    </div>
+                    <span className="post-category-label">{postCategories.find(([value]) => value === post.category)?.[1] ?? 'Other'}</span>
+                    {post.featured_image_url && <img className="post-image-preview" src={post.featured_image_url} alt={`Featured image for ${post.title}`} />}
+                    <p>{post.content}</p>
+                    {post.moderation_note && <p className="moderation-note">Review note: {post.moderation_note}</p>}
+                    <time dateTime={post.updated_at}>Updated {showDate(post.updated_at)}</time>
+                    <div className="dashboard-actions">
+                        {post.status === 'approved' ? (
+                          <button className="auth-secondary" type="button" disabled={busy} onClick={() => createRevision(post)}>Withdraw and revise</button>
+                        ) : (
+                        <button className="auth-secondary" type="button" onClick={() => setEditingPost(post)}>Edit</button>
+                        )}
+                        <button className="auth-submit" type="button" disabled={busy || post.status === 'pending' || post.status === 'approved'} onClick={async () => {
+                          setBusy(true);
+                          setNotice(null);
+                          try {
+                            const { error } = await supabase.from('user_posts')
+                              .update({ status: 'pending', moderation_note: null, reviewed_at: null })
+                              .eq('id', post.id).eq('user_id', user.id);
+                            if (error) throw error;
+                            setNotice({ kind: 'success', text: 'Your post is submitted for review.' });
+                            await loadDashboard();
+                          } catch (error) {
+                            reportError(error, 'Could not submit your post.');
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}>{post.status === 'pending' ? 'Awaiting review' : post.status === 'approved' ? 'Published' : 'Submit for review'}</button>
+                        <button className="account-delete-button" type="button" disabled={busy} onClick={() => deletePost(post)}>Delete</button>
+                      </div>
+                  </li>
+                ))}
+                {posts.length === 0 && <li className="support-empty">You have not created any posts.</li>}
+              </ul>
+            </section>
 
-        <section className="dashboard-panel" aria-labelledby="activity-title">
-          <h2 id="activity-title">Account activity and security</h2>
-          <p className="auth-description">Last successful sign-in: {showDate(user.last_sign_in_at)}. This list records profile and post changes; historical authentication events are managed by Supabase and are not exposed in this dashboard.</p>
-          <p className="auth-description">Authenticator MFA: {hasVerifiedAuthenticator ? 'enabled' : 'not enabled'} · <a href={sitePath('/account/security')}>Manage password and account security</a>.</p>
-          {activity.length ? (
-            <ul className="dashboard-list activity-list">
-              {activity.map((item) => <li key={item.id}><span>{item.event.replaceAll('_', ' ')}</span><time dateTime={item.created_at}>{showDate(item.created_at)}</time></li>)}
-            </ul>
-          ) : <p className="support-empty">No profile or post activity has been recorded yet.</p>}
-        </section>
+            <section className="dashboard-panel" id="updates" aria-labelledby="announcements-title">
+              <h2 id="announcements-title">Platform updates</h2>
+              {announcements.length ? (
+                <ul className="dashboard-list">
+                  {announcements.map((announcement) => (
+                    <li key={announcement.id} className="dashboard-list-item">
+                      <h3>{announcement.title}</h3>
+                      <p>{announcement.body}</p>
+                      <time dateTime={announcement.published_at}>{showDate(announcement.published_at)}</time>
+                    </li>
+                  ))}
+                </ul>
+              ) : <p className="support-empty">There are no published updates.</p>}
+            </section>
+
+            <section className="dashboard-panel" id="security" aria-labelledby="activity-title">
+              <h2 id="activity-title">Account activity and security</h2>
+              <p className="auth-description">Last successful sign-in: {showDate(user.last_sign_in_at)}. This list records profile and post changes; historical authentication events are managed by Supabase and are not exposed in this dashboard.</p>
+              <p className="auth-description">Authenticator MFA: {hasVerifiedAuthenticator ? 'enabled' : 'not enabled'} · <a href={sitePath('/account/security')}>Manage password and account security</a>.</p>
+              {activity.length ? (
+                <ul className="dashboard-list activity-list">
+                  {activity.map((item) => <li key={item.id}><span>{item.event.replaceAll('_', ' ')}</span><time dateTime={item.created_at}>{showDate(item.created_at)}</time></li>)}
+                </ul>
+              ) : <p className="support-empty">No profile or post activity has been recorded yet.</p>}
+            </section>
+          </div>
+        </div>
       </>
     );
   }
