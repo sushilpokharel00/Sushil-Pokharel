@@ -215,96 +215,124 @@ export default function AdminPage() {
     content = (
       <div className="admin-console-layout">
         <nav className="admin-console-nav" aria-label="Administrator sections">
+          <a className="admin-console-brand" href={sitePath('/')} aria-label="Sushil Pokharel admin console">
+            <span className="admin-console-brand-mark" aria-hidden="true">SP</span>
+            <span><strong>Sushil Pokharel</strong><small>ADMIN CONSOLE</small></span>
+          </a>
+          <span className="admin-console-nav-label">WORKSPACE</span>
+          <a href="#admin-platform-title">Platform overview</a>
           <a href="#admin-site-mode-title">Website controls</a>
           <a href="#admin-support-title">Support inbox</a>
-          <a href="#admin-platform-title">Platform overview</a>
+          <span className="admin-console-nav-label">MANAGEMENT</span>
           <a href="#admin-user-management-title">User accounts</a>
           <a href="#admin-post-review-title">Post moderation</a>
-          <a href="#admin-audit-title">Security log</a>
           <a href="#admin-announcements-title">Announcements</a>
+          <a href="#admin-audit-title">Security log</a>
+          <a className="admin-console-nav-exit" href={sitePath('/')}>View public website <span aria-hidden="true">↗</span></a>
         </nav>
         <div className="admin-console-content">
-          <span className="auth-eyebrow">SITE ADMINISTRATION</span>
-          <h1 id="admin-site-mode-title">Website status</h1>
-          <p className="auth-description">Edit the public home-page status and search metadata. AdSense scripts and the custom domain remain controlled by reviewed deployment files.</p>
-        <form className="auth-form" onSubmit={handleSave}>
-          <fieldset className="site-mode-picker">
-            <legend>Public website mode</legend>
-            <div className="site-mode-options">
-              {siteModes.map((mode) => (
-                <label className={`site-mode-option site-mode-${mode.value}`} key={mode.value}>
-                  <input
-                    type="radio"
-                    name="site-status"
-                    value={mode.value}
-                    checked={settings.site_status === mode.value}
-                    onChange={() => setSettings((current) => ({
-                      ...current,
-                      site_status: mode.value,
-                      is_maintenance: mode.value === 'maintenance',
-                    }))}
-                  />
-                  <span className="site-mode-indicator" aria-hidden="true" />
-                  <span className="site-mode-copy"><strong>{mode.label}</strong><small>{mode.detail}</small></span>
-                </label>
-              ))}
+          <header className="admin-console-heading">
+            <div>
+              <span className="auth-eyebrow">ADMINISTRATOR WORKSPACE</span>
+              <h1>Control center</h1>
+              <p>Manage your website, community, and support from one secure place.</p>
             </div>
-          </fieldset>
-          <label className="admin-checkbox">
-            <input
-              type="checkbox"
-              checked={settings.support_online}
-              onChange={(event) => setSettings((current) => ({ ...current, support_online: event.target.checked }))}
-            />
-            <span>Support team is online and available</span>
-          </label>
-          <div className="auth-field">
-            <label htmlFor="admin-site-name">Homepage/site name</label>
-            <input
-              id="admin-site-name"
-              value={settings.site_name}
-              onChange={(event) => setSettings((current) => ({ ...current, site_name: event.target.value }))}
-              maxLength={100}
-              required
-            />
-          </div>
-          <div className="auth-field">
-            <label htmlFor="admin-site-description">Homepage meta description</label>
-            <textarea
-              id="admin-site-description"
-              value={settings.site_description}
-              onChange={(event) => setSettings((current) => ({ ...current, site_description: event.target.value }))}
-              maxLength={300}
-              rows={3}
-              required
-            />
-          </div>
-          <div className="auth-field">
-            <label htmlFor="admin-maintenance-title">Home-page heading</label>
-            <input
-              id="admin-maintenance-title"
-              value={settings.maintenance_title}
-              onChange={(event) => setSettings((current) => ({ ...current, maintenance_title: event.target.value }))}
-              maxLength={120}
-              required
-            />
-          </div>
-          <div className="auth-field">
-            <label htmlFor="admin-maintenance-message">Home-page message</label>
-            <textarea
-              id="admin-maintenance-message"
-              value={settings.maintenance_message}
-              onChange={(event) => setSettings((current) => ({ ...current, maintenance_message: event.target.value }))}
-              maxLength={500}
-              rows={5}
-              required
-            />
-          </div>
-          <button className="auth-submit" type="submit" disabled={busy}>
-            {busy ? 'Saving…' : 'Save website status'}
-          </button>
-        </form>
-        {settings.updated_at && <p className="admin-updated">Last saved: {new Date(settings.updated_at).toLocaleString()}</p>}
+            <div className="admin-console-heading-actions">
+              <span className="admin-console-security"><i aria-hidden="true" /> MFA protected</span>
+              <span className={`admin-console-site-status admin-console-site-status-${settings.site_status}`}>
+                <i aria-hidden="true" />
+                {settings.site_status === 'live' ? 'Site is live' : settings.site_status === 'offline' ? 'Site is offline' : 'Maintenance mode'}
+              </span>
+            </div>
+          </header>
+          <AdminPlatformPanel />
+          <section className="admin-site-settings" aria-labelledby="admin-site-mode-title">
+            <div className="admin-section-heading">
+              <div>
+                <span className="auth-eyebrow">WEBSITE CONTROLS</span>
+                <h2 id="admin-site-mode-title">Website status</h2>
+                <p className="auth-description">Edit the public home-page status and search metadata. AdSense scripts and the custom domain remain controlled by reviewed deployment files.</p>
+              </div>
+            </div>
+            <form className="auth-form" onSubmit={handleSave}>
+              <fieldset className="site-mode-picker">
+                <legend>Public website mode</legend>
+                <div className="site-mode-options">
+                  {siteModes.map((mode) => (
+                    <label className={`site-mode-option site-mode-${mode.value}`} key={mode.value}>
+                      <input
+                        type="radio"
+                        name="site-status"
+                        value={mode.value}
+                        checked={settings.site_status === mode.value}
+                        onChange={() => setSettings((current) => ({
+                          ...current,
+                          site_status: mode.value,
+                          is_maintenance: mode.value === 'maintenance',
+                        }))}
+                      />
+                      <span className="site-mode-indicator" aria-hidden="true" />
+                      <span className="site-mode-copy"><strong>{mode.label}</strong><small>{mode.detail}</small></span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <label className="admin-checkbox">
+                <input
+                  type="checkbox"
+                  checked={settings.support_online}
+                  onChange={(event) => setSettings((current) => ({ ...current, support_online: event.target.checked }))}
+                />
+                <span>Support team is online and available</span>
+              </label>
+              <div className="auth-field">
+                <label htmlFor="admin-site-name">Homepage/site name</label>
+                <input
+                  id="admin-site-name"
+                  value={settings.site_name}
+                  onChange={(event) => setSettings((current) => ({ ...current, site_name: event.target.value }))}
+                  maxLength={100}
+                  required
+                />
+              </div>
+              <div className="auth-field">
+                <label htmlFor="admin-site-description">Homepage meta description</label>
+                <textarea
+                  id="admin-site-description"
+                  value={settings.site_description}
+                  onChange={(event) => setSettings((current) => ({ ...current, site_description: event.target.value }))}
+                  maxLength={300}
+                  rows={3}
+                  required
+                />
+              </div>
+              <div className="auth-field">
+                <label htmlFor="admin-maintenance-title">Home-page heading</label>
+                <input
+                  id="admin-maintenance-title"
+                  value={settings.maintenance_title}
+                  onChange={(event) => setSettings((current) => ({ ...current, maintenance_title: event.target.value }))}
+                  maxLength={120}
+                  required
+                />
+              </div>
+              <div className="auth-field">
+                <label htmlFor="admin-maintenance-message">Home-page message</label>
+                <textarea
+                  id="admin-maintenance-message"
+                  value={settings.maintenance_message}
+                  onChange={(event) => setSettings((current) => ({ ...current, maintenance_message: event.target.value }))}
+                  maxLength={500}
+                  rows={5}
+                  required
+                />
+              </div>
+              <button className="auth-submit" type="submit" disabled={busy}>
+                {busy ? 'Saving…' : 'Save website status'}
+              </button>
+            </form>
+            {settings.updated_at && <p className="admin-updated">Last saved: {new Date(settings.updated_at).toLocaleString()}</p>}
+          </section>
         <section className="admin-support-inbox" aria-labelledby="admin-support-title">
           <div className="admin-inbox-heading">
             <div>
@@ -356,7 +384,6 @@ export default function AdminPage() {
             </ul>
           )}
         </section>
-        <AdminPlatformPanel />
         </div>
       </div>
     );
